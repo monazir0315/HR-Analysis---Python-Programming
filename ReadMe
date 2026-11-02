@@ -1,0 +1,62 @@
+2026-10-27
+
+Project spec draft: Pre-Interview Screening and Verification Pipeline
+Problem statement
+Recruiters spend hours screening CVs by hand, then often verify claims (degrees, certificates, past jobs, GitHub work) only at the end of the process, after interviews and sometimes after an offer. Late discovery of false or unverifiable claims wastes everyone's time and can mean restarting the hiring process. Meanwhile, most unsuccessful candidates get no feedback, or a generic template that says nothing useful, which hurts the employer's reputation and leaves candidates unable to improve.
+This project builds a lightweight pipeline that screens applicants against the role's must-have criteria, verifies the claims of shortlisted candidates before interview, and prepares specific, job-related feedback for unsuccessful candidates. Every consequential decision stays with a human.
+Design principle that shapes every criterion
+The system screens and organises, it never decides. Under GDPR Article 22, and because the EU AI Act treats hiring tools as high-risk, a fully automated rejection is the riskiest thing you could build. So "filtering" means "flagging against criteria the recruiter defined", and a recruiter confirms every shortlist and rejection. (Check the current legal wording yourself before citing it in your ADR.)
+User stories
+Primary
+As a recruiter, I want applicants screened against the role's must-have criteria, the shortlisted candidates' claims verified before interview, and specific feedback drafted for unsuccessful candidates, so that I only interview candidates whose claims check out and I don't have to hand-write or skip rejection feedback.
+Supporting (for your backlog and task branches)
+As a candidate, I want to know exactly which documents are requested and why, so that I can provide only what's needed.
+As a candidate who was not selected, I want feedback tied to the role's requirements, so that I understand the decision and can improve.
+As a hiring manager, I want an audit trail of who confirmed what, so that decisions are defensible if challenged.
+Acceptance criteria
+Each one is written so someone else can check it with a fixture and a test. Items marked (MVP) are what I'd build in two weeks; the rest are stretch.
+A. Role setup
+(MVP) Given a role definition, when it is saved, it must contain at least one must-have criterion and a stated verification list (which claim types need proof, e.g. degree, employment, GitHub). A role with zero must-haves is rejected with a validation error.
+(MVP) Given a role, when a criterion is defined, it must be job-related and from a closed set of types (years of experience, degree level, required skill, certification, language). Free-text criteria that reference protected characteristics (age, gender, nationality, marital or family status) are rejected.
+B. CV intake and extraction
+(MVP) Given a synthetic CV text, when processed, the system outputs structured claims (degree, employment with dates, certificate, skills, GitHub link) matching the fixture's expected JSON exactly on the 6 to 8 fixture CVs.
+(MVP) Given a CV where extraction fails or returns invalid JSON, the candidate is marked "needs manual entry" and is not screened out.
+C. Screening (flagging, not deciding)
+(MVP) Given a candidate's claims and a role with 4 must-haves where the candidate meets 4, the screening result is "meets all must-haves". Where they meet 3, the result is "missing: [the exact criterion]". The result is never "rejected".
+(MVP) Given a candidate with an ambiguous claim (e.g. "5 years in data" for a "Python developer" criterion), the result is "needs human review", not "does not meet".
+(MVP) Given two candidates with identical claims but different names, ages or nationalities in the CV, the screening results are identical. (Fixture pair test for consistency.)
+D. Human gate: shortlist
+(MVP) Given screening results, no candidate moves to "verification requested" until a named recruiter explicitly confirms them onto the shortlist. The confirmation is recorded with user and timestamp.
+(MVP) Given a candidate flagged "missing a must-have", the recruiter can override and shortlist them, and the override requires a written reason.
+E. Verification
+(MVP) Given a shortlisted candidate, when verification starts, the system generates one proof request per claim type listed in the role's verification list, and no others. Requests are not sent at application time, only after shortlist.
+(MVP) Given a GitHub link, when the checker runs (against a fake in tests), a non-existent profile gives "failed: not found", an existing profile gives "pending human review", and an API error or rate limit gives "check unavailable, retry", never "failed".
+(MVP) Given a candidate uploads a certificate file, the item moves to "pending human review". No item can reach "verified" without a recruiter confirming it.
+Given a proof request with no response after N days (configurable), the system sends one reminder and then marks the item "no response", flagged for the recruiter.
+(MVP) Given a candidate with all required items verified by a human, the candidate becomes "interview-ready". Given any required item unverified or failed, the candidate cannot be marked "interview-ready" without a recorded recruiter override.
+F. Feedback to unsuccessful candidates
+(MVP) Given a candidate the recruiter has marked unsuccessful, the system drafts feedback that cites only the role's job-related criteria recorded as unmet or unverified. It contains no reference to other candidates, ranking, or protected characteristics.
+(MVP) Given a drafted feedback message, it is never sent until a recruiter approves it. Editing before approval is allowed, and the approved version is the one stored.
+Given a candidate with no recorded unmet criteria (e.g. role closed or filled), the system drafts a neutral status message and does not invent reasons.
+Given a feedback draft containing a protected-characteristic term or a claim not found in the screening record, the draft is blocked and flagged. (Deterministic check; test with fixtures.)
+G. Privacy and audit
+(MVP) Given a closed role, when the retention period (e.g. 30 days, configurable) expires, uploaded documents and extracted personal data are deleted, and the audit log keeps only candidate ID, actions, timestamps and users.
+(MVP) Given any status change (shortlisted, verified, rejected, feedback sent), an audit entry records who, what and when. Entries cannot be edited.
+(MVP) Given text sent to an external LLM, names, emails, phone numbers and addresses are redacted first. A test asserts the outgoing payload contains none of the fixture's PII.
+Explicit non-goals
+No automatic rejection, ranking or scoring of candidates.
+No forgery or fake-document detection.
+No contacting former employers or universities.
+No real candidate data; all fixtures are synthetic and labelled as such.
+What this adds to your spec beyond the day-2 nudge
+Data: synthetic CVs, role definitions, and a closed list of claim and criterion types.
+Privacy ADR: timing of requests (shortlist only), data minimisation, retention, redaction before the LLM call.
+Contracts: GitHub API (rate limits, error behaviour), email service, LLM API (schema, timeout, fallback to manual).
+Human gates: shortlist confirmation, verification confirmation, feedback approval.
+Scope warning
+That is a lot for two weeks. I'd build the (MVP) items only, which is about 16 criteria, and even that is tight. If you need to cut, drop the verification of certificates beyond the upload and review state, and keep GitHub as the single automated check. A small, fully tested vertical slice will grade better than a broad, half-finished one.
+Suggested state machine for the spec
+applied → screened → shortlisted (human) → verification requested → verified (human) → interview-ready, with side branches unsuccessful (human) → feedback drafted → feedback approved (human) → sent.
+To write the 6 to 8 synthetic fixture CVs with expected outputs so you have your tests ready before any code.
+
+
