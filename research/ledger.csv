@@ -1,0 +1,13 @@
+name,low,high,unit,kind,source,date_seen,notes
+employers_50_499_ES,,,enterprises,open,"INE DIRCE or Eurostat SBS by size class (confirm table code; put query URL here)",,segment A
+staffing_agencies_ES,,,enterprises,open,"INE DIRCE / Eurostat SBS, NACE N78",,segment B
+regulated_employers_ES,,,enterprises,open,"INE DIRCE / Eurostat SBS, NACE K, O, P, Q",,segment C
+tech_employers_ES,,,enterprises,open,"INE DIRCE / Eurostat SBS, NACE J62-J63",,segment D
+hires_per_employer_year,,,hires,open,"Eurostat job vacancy statistics / LFS job changers (to confirm)",,per size band
+share_with_ats,,,share of employers,research,to research: two sources opened by us,,budget b(x)
+share_using_ai_hr,,,share of employers,open,"Eurostat ICT usage in enterprises, AI use by size class (to confirm)",,budget b(x)
+share_false_claim_found,,,share of hires,research,to research: screening-provider discrepancy reports,,problem level
+problem_rate_a,,,share of employers,assumption,interviews (step 6) will replace,,problem a(x)
+pay_rate,,,share of qualified employers,assumption,fake door (step 13) will replace,,
+price,,,EUR per unit,assumption,competitors.csv (step 7),,unit depends on price model
+reach_year1,,,share of SAM,assumption,channel plan (step 13),,
