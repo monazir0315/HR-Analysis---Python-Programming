@@ -4,7 +4,7 @@ Step 1 of `audience-analysis-steps.md`. Every agent reads this file first.
 
 ## Product
 
-A lightweight pipeline that screens applicants against the role's must-have criteria, verifies the claims of shortlisted candidates before interview, and drafts specific, job-related feedback for unsuccessful candidates. Every consequential decision stays with a human.
+A lightweight web app for recruiters that screens applicants against the role's must-have criteria, verifies the claims of shortlisted candidates before interview, drafts specific, job-related feedback for unsuccessful candidates, and gives HR a dashboard of insights across roles and applications. It works on its own or alongside an existing ATS through CSV import. Every consequential decision stays with a human.
 
 ## Who is who
 
