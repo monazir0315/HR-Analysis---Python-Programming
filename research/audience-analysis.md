@@ -55,6 +55,7 @@ Hiring managers are a fourth, smaller group. They consume the output (interview-
 | No time for rejection feedback | Recruiter | Drafted, approved feedback |
 | Candidates asked for too much too early | Candidate | Requests only after shortlist |
 | Defending a decision | HR lead | Audit trail and human confirmations |
+| No overview of where hiring slows down | HR lead | Dashboard of stage counts, common unmet criteria and response times |
 
 ## 5. The candidate audience matters too
 

@@ -11,7 +11,7 @@ The session sized a consumer product: people × rates × price. Our buyer is an 
 | Session 9 (Ritmo Coach) | Our pipeline |
 |---|---|
 | unit = a person in an age band | unit = an **employer** in a segment (A to D) × size band |
-| value = € per month per person | value = € per seat, per hire or per verified candidate; we have to choose one (step 11) |
+| value = € per month per person | value = € per seat, per hire or per verified candidate; we have to choose one (step 13) |
 | one audience pays and uses | buyer, daily user and affected party are **different people** (HR lead, recruiter, candidate) |
 | P(pay) from the app's own funnel | no funnel yet: interviews and a fake door give the first rates |
 
@@ -62,7 +62,7 @@ Starting rows. Values are left empty on purpose: the audience docx deliberately 
 | `problem_rate_a` | share of employers | assumption → partial | interviews (step 6) |
 | `pay_rate` | share of qualified employers | assumption → partial | fake door (step 13) |
 | `price` | € / unit | assumption | competitor prices (step 7) |
-| `reach_year1` | share of SAM | assumption | channel plan (step 11) |
+| `reach_year1` | share of SAM | assumption | channel plan (step 13) |
 
 Check every Eurostat and INE table code against the live API before quoting it, and put the query URL in the `source` column.
 
