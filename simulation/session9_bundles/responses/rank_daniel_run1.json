@@ -1,0 +1,12 @@
+{
+  "ranking": ["B6", "B3", "B5", "B4", "B2", "B1"],
+  "bundles": [
+    {"id": "B1", "if_present": "neutral", "if_absent": "neutral", "when_i_would_meet_it": "I would not; a recruiter sets up the role before I ever look at the numbers, maybe I hear about it in a weekly catch-up.", "why": "Setup is the recruiters' job and I only care that the protected-traits block keeps us legal."},
+    {"id": "B2", "if_present": "neutral", "if_absent": "tolerate", "when_i_would_meet_it": "Only indirectly, when a recruiter tells me CVs are processed faster than before.", "why": "I assume any hiring tool reads CVs; I do not want to see how it does it."},
+    {"id": "B3", "if_present": "like", "if_absent": "dislike", "when_i_would_meet_it": "Monday before the CEO meeting, when I ask what the shortlist for the data role looks like and who the best three are.", "why": "This is the closest thing to the answer I need, though I would be annoyed it is filtered not ranked, so I want a clear answer for the CEO."},
+    {"id": "B4", "if_present": "like", "if_absent": "tolerate", "when_i_would_meet_it": "When a recruiter says someone is interview-ready or a candidate complains about being asked for documents.", "why": "Checked claims protect us from bad hires and legal trouble, but it is the recruiters' work, not mine."},
+    {"id": "B5", "if_present": "like", "if_absent": "dislike", "when_i_would_meet_it": "When a rejected candidate complains or threatens a claim and I need to know what we told them.", "why": "As head of people I worry about discrimination claims, so specific, approved feedback is real protection."},
+    {"id": "B6", "if_present": "like", "if_absent": "dislike", "when_i_would_meet_it": "Once a week on my laptop, five minutes before the CEO meeting, to show that hiring got faster.", "why": "It is the only screen I use myself and it gives me the time-to-interview-ready number for the CEO; I would want it to show a top three but accept it will not."}
+  ],
+  "proof_timing": {"at_application": 2, "after_shortlist": 5, "why": "Asking everyone for documents upfront would put off good candidates and raise data-protection questions, whereas asking only shortlisted people with a stated reason is fair and defensible."}
+}

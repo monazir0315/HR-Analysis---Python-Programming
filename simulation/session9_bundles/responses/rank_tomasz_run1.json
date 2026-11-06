@@ -1,0 +1,12 @@
+{
+  "ranking": ["B5", "B3", "B2", "B1", "B4", "B6"],
+  "bundles": [
+    {"id": "B1", "if_present": "neutral", "if_absent": "neutral", "when_i_would_meet_it": "I never see it; I only wonder, in the lunch break while reading the rejection, whether the must-haves were fair and not about my age.", "why": "The blocking of age criteria sounds good, but I cannot see it, so I only care if the reason in my email matches a real requirement."},
+    {"id": "B2", "if_present": "like", "if_absent": "dislike", "when_i_would_meet_it": "When I read the rejection and see whether it quotes my 12 years of experience correctly, or got my jobs wrong.", "why": "If a machine misread my CV and nobody can correct it, that is exactly the unfairness I suspect; showing the working and allowing correction matters."},
+    {"id": "B3", "if_present": "like", "if_absent": "dislike", "when_i_would_meet_it": "At lunch, when I open the email and want to know which requirement I supposedly missed and whether a human confirmed it.", "why": "A named person confirming a written reason for 'missing' is the only thing that answers my fear that AI rejected me for my age."},
+    {"id": "B4", "if_present": "neutral", "if_absent": "neutral", "when_i_would_meet_it": "Only if I were shortlisted; as a rejected candidate I never meet it.", "why": "It does not affect me now, as I was turned down, and asking for proof only from shortlisted people seems reasonable."},
+    {"id": "B5", "if_present": "like", "if_absent": "dislike", "when_i_would_meet_it": "On my phone at lunch, reading the email, in the first sentence, deciding in 3 minutes whether to reply with a complaint.", "why": "A specific reason with my own CV lines that I can check as true or false is the only thing that stops me going public; a generic reason makes me complain."},
+    {"id": "B6", "if_present": "neutral", "if_absent": "neutral", "when_i_would_meet_it": "Never; it is only for the HR lead.", "why": "Totals without names do not help me, though it is good that it does not rank individuals."}
+  ],
+  "proof_timing": {"at_application": 2, "after_shortlist": 5, "why": "Uploading degree certificates and referees for every application is a lot of effort and personal data for a job I may not get, so I would probably skip it; after shortlisting, with the reason stated, it is fair."}
+}

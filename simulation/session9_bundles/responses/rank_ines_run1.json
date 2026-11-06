@@ -1,0 +1,12 @@
+{
+  "ranking": ["B3", "B1", "B2", "B4", "B5", "B6"],
+  "bundles": [
+    {"id": "B1", "if_present": "like", "if_absent": "tolerate", "when_i_would_meet_it": "Monday morning, pasting the data engineer job description before the 140 applications get processed.", "why": "I hate retyping what is already in the job description, so suggested must-haves save me time, but I could still write them by hand."},
+    {"id": "B2", "if_present": "expect", "if_absent": "dislike", "when_i_would_meet_it": "Tuesday, uploading the CV batch or importing the CSV from my ATS between two interviews.", "why": "Without CVs read automatically I would be typing claims by hand for 140 people, which makes the tool pointless."},
+    {"id": "B3", "if_present": "like", "if_absent": "dislike", "when_i_would_meet_it": "Wednesday in a 20-minute block, going through the flagged list to confirm the shortlist for the interviews.", "why": "This is the core of my problem, cutting 140 applications to a shortlist quickly, and I need to find my place again after phone calls."},
+    {"id": "B4", "if_present": "like", "if_absent": "tolerate", "when_i_would_meet_it": "Thursday, sending proof requests to the shortlisted people before Friday and checking uploaded documents.", "why": "It is useful and saves email chasing, but I can ask for certificates by email myself if I have to."},
+    {"id": "B5", "if_present": "like", "if_absent": "tolerate", "when_i_would_meet_it": "Friday afternoon, approving feedback drafts for rejected candidates instead of writing dozens of emails.", "why": "It is a nice time saver and good for employer image, but today I mostly send short generic rejections or nothing, so it is not essential."},
+    {"id": "B6", "if_present": "neutral", "if_absent": "neutral", "when_i_would_meet_it": "Only when my HR lead asks for numbers in a monthly meeting; I would not open it myself.", "why": "It is for the HR lead and does not change my daily work much."}
+  ],
+  "proof_timing": {"at_application": 2, "after_shortlist": 5, "why": "Asking for documents at application would scare off candidates and give me 140 piles of paperwork to handle, while asking only the shortlisted few is reasonable and manageable."}
+}

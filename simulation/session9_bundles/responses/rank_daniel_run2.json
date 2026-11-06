@@ -1,0 +1,12 @@
+{
+  "ranking": ["B6", "B3", "B4", "B5", "B2", "B1"],
+  "bundles": [
+    {"id": "B1", "if_present": "neutral", "if_absent": "neutral", "when_i_would_meet_it": "I would not; a recruiter sets up a role when we open a vacancy and I only hear about it in passing.", "why": "It is the recruiters' setup chore, and I only care that the blocking of protected traits keeps us out of legal trouble."},
+    {"id": "B2", "if_present": "neutral", "if_absent": "tolerate", "when_i_would_meet_it": "Only if a recruiter mentions in the weekly catch-up that uploading CVs is quicker now.", "why": "It is plumbing I never see, though I would assume any tool reads CVs somehow."},
+    {"id": "B3", "if_present": "like", "if_absent": "expect", "when_i_would_meet_it": "When the CEO asks who the best three for the data role are and I want a shortlist to point at.", "why": "I want a shortlist for the CEO; a filtered list that is not ranked is not what I expected, but a person signing off is defensible under HR law."},
+    {"id": "B4", "if_present": "like", "if_absent": "neutral", "when_i_would_meet_it": "When a recruiter tells me a candidate is interview-ready and checked, before I hear it from the hiring manager.", "why": "Checked claims reduce the risk of a bad hire and an embarrassing mistake, but I only care about the result, not the process."},
+    {"id": "B5", "if_present": "like", "if_absent": "tolerate", "when_i_would_meet_it": "When a rejected candidate complains or threatens a claim and I need to show what we told them.", "why": "Specific, approved feedback protects the company legally and from bad reviews, but it is not what I open the tool for."},
+    {"id": "B6", "if_present": "like", "if_absent": "dislike", "when_i_would_meet_it": "My weekly five-minute check on a laptop, before the CEO meeting, to get a number showing hiring got faster.", "why": "It is the only screen I personally use and the only one that gives me an answer for the CEO; without it I stop using the tool."}
+  ],
+  "proof_timing": {"at_application": 2, "after_shortlist": 5, "why": "Asking for documents up front puts people off applying and looks heavy-handed, while asking only the shortlisted, with a reason, is fair and easy to defend."}
+}

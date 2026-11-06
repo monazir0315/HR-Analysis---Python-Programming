@@ -1,0 +1,12 @@
+{
+  "ranking": ["B4", "B5", "B3", "B2", "B1", "B6"],
+  "bundles": [
+    {"id": "B1", "if_present": "neutral", "if_absent": "neutral", "when_i_would_meet_it": "I would never see it; it only shapes which proof the company asks me for.", "why": "It happens before I apply and I cannot see it, though I like that asked items match real job requirements."},
+    {"id": "B2", "if_present": "neutral", "if_absent": "neutral", "when_i_would_meet_it": "Right after I send my CV, when the company reads my degree and GitHub from it.", "why": "I care that my personal details are removed, but I never see this screen myself."},
+    {"id": "B3", "if_present": "like", "if_absent": "tolerate", "when_i_would_meet_it": "When I either get the proof email or a rejection a few days after applying.", "why": "A person confirming the shortlist makes me trust that a machine did not just throw my CV away."},
+    {"id": "B4", "if_present": "like", "if_absent": "dislike", "when_i_would_meet_it": "On the bus after a night shift, opening the email link on my phone to upload my degree and GitHub link.", "why": "This is what I actually use; it must say who sees my documents and why, show my file was received, and work on a phone, or I will think it is a scam."},
+    {"id": "B5", "if_present": "like", "if_absent": "tolerate", "when_i_would_meet_it": "When I get an email saying I was not selected and I wonder what I lacked.", "why": "Specific reasons help me improve, and it is better than silence, but I can live without it."},
+    {"id": "B6", "if_present": "neutral", "if_absent": "neutral", "when_i_would_meet_it": "I would never meet it; it is only for the HR lead.", "why": "It shows only totals and does not touch me, though knowing no ranked individuals are shown is mildly reassuring."}
+  ],
+  "proof_timing": {"at_application": 1, "after_shortlist": 5, "why": "I would not upload my certificate to an unknown company just to apply, since it looks like a scam, but once shortlisted and told why, I would send it."}
+}

@@ -82,6 +82,13 @@ the proof request; the recruiter previews and confirms it (W5).
 **Next:** walk again (U12) with the same personas on screenshots of the "Walk again" steps in `wave.md`,
 then 3–5 real people.
 
+## How the session 9 bundle ranking was run (U13)
+
+2026-11-06. No API key, so the by-hand route: each of the 8 prompts in `session9_bundles/prompts/` was answered
+by its own fresh agent on Claude Sonnet (`claude-sonnet-5-5`) that read only that prompt file. 8 model calls.
+Then, from `session9_bundles/`: `python rank_bundles.py --check` (coverage) and `python rank_bundles.py`
+(validates the 8 answers and writes [`ranking.md`](session9_bundles/ranking.md)). Result is `simulated`: a shape, not a level.
+
 ## Pass 1 later: screenshots of the prototype
 
 Take them in the browser (phone width 390 px in DevTools for Priya and Tomasz, laptop for Inés and Daniel),

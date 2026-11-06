@@ -1,0 +1,12 @@
+{
+  "ranking": ["B3", "B1", "B2", "B4", "B5", "B6"],
+  "bundles": [
+    {"id": "B1", "if_present": "like", "if_absent": "tolerate", "when_i_would_meet_it": "Monday morning, pasting the data engineer job description before the 140 applications are screened.", "why": "It saves me retyping must-haves from the job description, which I hate, and I can edit each one quickly."},
+    {"id": "B2", "if_present": "like", "if_absent": "dislike", "when_i_would_meet_it": "Tuesday, uploading the CV batch or importing the CSV from my ATS between two interviews.", "why": "Without automatic reading of CVs I would be back to opening 140 files by hand, so I expect it."},
+    {"id": "B3", "if_present": "like", "if_absent": "dislike", "when_i_would_meet_it": "Wednesday in a 20-minute block, going through meets/missing flags to confirm the shortlist.", "why": "This is the core of my week: it turns a pile of 140 into a shortlist I can confirm, and I need the reasons to defend it."},
+    {"id": "B4", "if_present": "like", "if_absent": "tolerate", "when_i_would_meet_it": "Thursday, sending proof requests to the shortlisted candidates and later checking their uploaded documents.", "why": "It makes my checking organised and I need to send the requests before Friday, but I could chase by email if I had to."},
+    {"id": "B5", "if_present": "like", "if_absent": "neutral", "when_i_would_meet_it": "Friday afternoon, approving drafted feedback for the rejected candidates instead of writing 100 emails.", "why": "It saves time and is nice for candidates, but it is the last thing I do and I would skip it if I ran out of time."},
+    {"id": "B6", "if_present": "neutral", "if_absent": "neutral", "when_i_would_meet_it": "Only when my HR lead mentions the monthly numbers; I would not open it myself.", "why": "It does not change my daily work, it is for my boss."}
+  ],
+  "proof_timing": {"at_application": 2, "after_shortlist": 5, "why": "Asking for documents at application is a big hurdle that would make many good candidates drop out and gives me 140 piles of documents to check, while asking only the shortlisted keeps the effort where it matters."}
+}

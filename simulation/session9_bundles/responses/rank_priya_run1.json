@@ -1,0 +1,12 @@
+{
+  "ranking": ["B4", "B5", "B3", "B2", "B1", "B6"],
+  "bundles": [
+    {"id": "B1", "if_present": "neutral", "if_absent": "neutral", "when_i_would_meet_it": "I would never see it; at most the proof request I get mentions a reason that came from the job description.", "why": "It is the recruiter's setup screen, so it only matters to me if it makes the requests for proof sensible."},
+    {"id": "B2", "if_present": "neutral", "if_absent": "neutral", "when_i_would_meet_it": "The night I upload my CV and hope nobody reads the wrong dates or my name wrongly.", "why": "I care that my CV is read correctly and personal details are protected, but I do not see this part."},
+    {"id": "B3", "if_present": "like", "if_absent": "tolerate", "when_i_would_meet_it": "Waiting a few days after applying to hear if I got shortlisted or not.", "why": "A person confirming and giving reasons feels fairer to me than a machine rejecting me quietly."},
+    {"id": "B4", "if_present": "like", "if_absent": "dislike", "when_i_would_meet_it": "On the bus after a night shift, opening the email on my phone to upload my degree and GitHub link.", "why": "I need a clear, safe-looking page that says who sees my documents and why, and confirms the file was sent, or I will think it is a scam."},
+    {"id": "B5", "if_present": "like", "if_absent": "tolerate", "when_i_would_meet_it": "Getting a reply about another job I applied for and was not chosen for.", "why": "Specific feedback tells me what to improve, but I would still apply if it were missing."},
+    {"id": "B6", "if_present": "neutral", "if_absent": "neutral", "when_i_would_meet_it": "I would not meet it at all.", "why": "It is only for the HR lead and does not touch my application, though I like that it does not name people."}
+  ],
+  "proof_timing": {"at_application": 2, "after_shortlist": 5, "why": "Sending degree papers to a company I know nothing about before they even want me feels risky and like a scam, but after being shortlisted with a stated reason I would go ahead."}
+}

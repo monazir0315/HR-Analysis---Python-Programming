@@ -1,0 +1,12 @@
+{
+  "ranking": ["B5", "B3", "B4", "B2", "B1", "B6"],
+  "bundles": [
+    {"id": "B1", "if_present": "neutral", "if_absent": "neutral", "when_i_would_meet_it": "I never see it; at most I wonder at lunch whether the job's requirements were really about the skills or about my age.", "why": "It is the recruiter's screen, but I only care that the criteria are job-related and not about age, which I cannot check myself."},
+    {"id": "B2", "if_present": "like", "if_absent": "tolerate", "when_i_would_meet_it": "When I upload my CV and later read the email and check whether the tool understood my 12 years correctly.", "why": "If the tool reads my experience wrongly I will be furious, so I want it to be correct and for a person to be able to fix it, but I do not see it directly."},
+    {"id": "B3", "if_present": "like", "if_absent": "dislike", "when_i_would_meet_it": "When I read the rejection on my phone and want to know whether a human or an AI decided I was missing something.", "why": "Flags with a reason and a person confirming every decision is the only thing that answers my suspicion that a machine rejected me because of my age."},
+    {"id": "B4", "if_present": "neutral", "if_absent": "neutral", "when_i_would_meet_it": "I was not shortlisted so I would not get this email, but I would ask a friend who applied whether they had to upload documents.", "why": "It does not touch me as a rejected candidate, though it is good that only shortlisted people are bothered."},
+    {"id": "B5", "if_present": "like", "if_absent": "dislike", "when_i_would_meet_it": "At lunch, reading the email on my phone for the first time and deciding in under three minutes whether to complain.", "why": "A specific, true reason with the line from my CV is what I need to judge if the decision is fair, and a vague generic one becomes a public complaint."},
+    {"id": "B6", "if_present": "neutral", "if_absent": "neutral", "when_i_would_meet_it": "Never, it is for the HR lead, though I am glad it shows no names.", "why": "Totals for the HR lead do not change my situation as a rejected candidate."}
+  ],
+  "proof_timing": {"at_application": 2, "after_shortlist": 5, "why": "Handing over certificates and referees before anyone has even read my CV is a lot of effort and risk for a long shot, but after being shortlisted with a stated reason I would gladly do it."}
+}
