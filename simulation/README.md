@@ -16,6 +16,7 @@ directive (fixed) → personas → critique (each persona, twice) → triage (�
 | [`simulate_wave.py`](simulate_wave.py) | The course script: one wave = critiques + triage → `findings.json` and `wave.md` |
 | [`ux_critic.md`](ux_critic.md) · [`wave_triage.md`](wave_triage.md) | The two prompts the script sends |
 | `wave1_structure/` | Wave 1, on the written structure (stage 2): input [`structure.md`](wave1_structure/structure.md), the 9 saved prompts in `prompts/` |
+| `session9_bundles/` | Session 9, steps 10, 11 and 13: features grouped into 6 bundles ([`bundles.md`](session9_bundles/bundles.md)), usage scenarios per bundle ([`scenarios.md`](session9_bundles/scenarios.md)), and personas ranking the bundles with a Kano pair (`rank_bundles.py`, 8 saved prompts). Shape only, never a level |
 
 ## The three passes, cheapest first
 
