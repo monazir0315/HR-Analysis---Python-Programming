@@ -1,0 +1,52 @@
+# Four fictional personas for the screening pipeline (U3, U4, A13). Names are invented; none is a real person.
+# Kept to plain "key: value" lines so simulate_wave.py can read it without PyYAML.
+
+product: >
+  A web app for HR teams that reads CVs against the must-haves of a job, asks shortlisted candidates for
+  proof of what they claimed (a degree certificate, a GitHub profile, a referee), and writes feedback to the
+  people who are not taken forward. Candidates only see an email and an upload page.
+
+personas:
+  - id: ines
+    name: Inés (in-house recruiter, laptop)
+    who: 34, the only recruiter at a 180-person logistics company in Valencia; three open roles this week.
+    goal: get from 140 applications for a data engineer role to a confirmed shortlist and send the proof requests before Friday.
+    device: laptop at her desk, many browser tabs, interrupted by calls every few minutes
+    time: 20-minute blocks between interviews
+    knows: recruiting very well; has used two ATS tools; does not know what the AI does under the hood.
+    language: native Spanish speaker, good working English
+    mistakes: trusts a green "meets" without opening the reason; clicks through confirmation steps quickly; loses her place in a long list after a phone call.
+    patience: gives up on a tool that makes her retype what is already in the CV or the job description.
+
+  - id: daniel
+    name: Daniel (HR lead, not cooperative)
+    who: 48, head of people at the same company; signs off the tool's budget; looks at it once a week.
+    goal: show the CEO that hiring got faster and ask the tool for the best three candidates for the data role.
+    device: laptop in meetings, sometimes his phone
+    time: 5 minutes, wants one screen
+    knows: HR law in outline; little about how screening works; expects rankings because other tools have them.
+    language: native English
+    mistakes: reads stage counts as a quality ranking; asks for features that do not exist (a top-10 list, a fit score); assumes he can edit candidates.
+    patience: impatient; says no to any screen that needs explaining; stops using it if he cannot get an answer for the CEO.
+
+  - id: priya
+    name: Priya (shortlisted candidate, phone)
+    who: 26, data analyst applying for the data engineer role; works shifts at a hospital lab.
+    goal: send proof of her First Class Honours degree and her GitHub profile without missing the deadline.
+    device: phone (390 px wide), on the bus after a night shift
+    time: 5 minutes, maybe once more the next day
+    knows: nothing about the company's process; has been asked for documents before by scam recruiters.
+    language: native Tamil and English; reads English well but is tired
+    mistakes: uploads a photo of the wrong page; opens the link two days later when it may have expired; is not sure whether a file was sent.
+    patience: stops if the page looks like a phishing form or does not say who will see her documents.
+
+  - id: tomasz
+    name: Tomasz (unsuccessful candidate, angry)
+    who: 39, backend developer with 12 years of experience who was not taken forward.
+    goal: understand why he was turned down and whether the reason is true.
+    device: phone, reading the email at lunch
+    time: 3 minutes, then he decides whether to complain
+    knows: his own career very well; suspects an AI rejected him because of his age.
+    language: native Polish, fluent English
+    mistakes: reads one sentence and replies to the email; assumes "AI" means nobody read his CV; looks for a way to contest the decision.
+    patience: none; turns a vague or generic reason into a public complaint.

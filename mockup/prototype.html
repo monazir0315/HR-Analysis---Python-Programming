@@ -1,0 +1,1358 @@
+<title>Pre-Interview Pipeline Prototype</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: app shell. Fixed left navigation beside a scrolling work area; the navigation moves to the top under 860px. Outside views (candidate, referee) use a single narrow column. */
+:root{
+  --bg:#F3F5F3; --surface:#FFFFFF; --field:#FAFBFA; --hover:#EEF2F0;
+  --ink:#17201C; --muted:#5A6661; --line:#DDE3E0; --line-strong:#C3CCC8;
+  --accent:#1D5F4F; --accent-ink:#154A3D; --accent-soft:#E1EFEA; --on-accent:#FFFFFF;
+  --ok:#23744A; --ok-soft:#E2F2E8; --warn:#95600A; --warn-soft:#FBEFD9;
+  --bad:#B02A21; --bad-soft:#FBE6E4; --info:#2457A0; --info-soft:#E3ECF8;
+  --neutral:#4F5A55; --neutral-soft:#E9EDEB; --s1:#A9B4AF; --s6:#6E7A75;
+  --paper:#FFFDF6; --paper-ink:#2A2924; --scrim:rgba(12,18,16,.45);
+  --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --body:'IBM Plex Sans','Segoe UI',system-ui,-apple-system,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1412; --surface:#171E1B; --field:#121815; --hover:#1F2824;
+  --ink:#E4EBE8; --muted:#98A6A0; --line:#27312D; --line-strong:#3A4641;
+  --accent:#67C2A5; --accent-ink:#8AD6BC; --accent-soft:#183129; --on-accent:#0B1A15;
+  --ok:#6CCB8E; --ok-soft:#17301F; --warn:#E5B154; --warn-soft:#33280F;
+  --bad:#F1897F; --bad-soft:#3A1C19; --info:#8DB5F2; --info-soft:#182638;
+  --neutral:#A9B5B0; --neutral-soft:#232C28; --s1:#56625D; --s6:#7F8C86;
+  --paper:#ECE6D6; --paper-ink:#2A2924; --scrim:rgba(0,0,0,.6); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1412; --surface:#171E1B; --field:#121815; --hover:#1F2824;
+  --ink:#E4EBE8; --muted:#98A6A0; --line:#27312D; --line-strong:#3A4641;
+  --accent:#67C2A5; --accent-ink:#8AD6BC; --accent-soft:#183129; --on-accent:#0B1A15;
+  --ok:#6CCB8E; --ok-soft:#17301F; --warn:#E5B154; --warn-soft:#33280F;
+  --bad:#F1897F; --bad-soft:#3A1C19; --info:#8DB5F2; --info-soft:#182638;
+  --neutral:#A9B5B0; --neutral-soft:#232C28; --s1:#56625D; --s6:#7F8C86;
+  --paper:#ECE6D6; --paper-ink:#2A2924; --scrim:rgba(0,0,0,.6); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px 40px}
+.demo-banner{max-width:1320px;margin:0 auto 10px;font-size:12px;color:var(--muted);display:flex;gap:6px 14px;flex-wrap:wrap;align-items:center}
+.demo-banner b{font-weight:600;color:var(--ink)}
+.shell{display:grid;grid-template-columns:224px minmax(0,1fr);gap:20px;align-items:start;max-width:1320px;margin:0 auto}
+.side{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 10px;display:flex;flex-direction:column;gap:2px}
+.brand{font-family:var(--display);font-weight:700;font-size:18px;padding:0 10px 2px;line-height:1.2;letter-spacing:-.01em}
+.brand-sub{font-size:12px;color:var(--muted);padding:0 10px 10px}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;color:var(--ink);text-decoration:none;font-weight:500}
+.nav a:hover{background:var(--hover)}
+.nav a.on{background:var(--accent-soft);color:var(--accent-ink)}
+.nav .sep{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:14px 10px 4px}
+.badge{font-family:var(--mono);font-size:11px;background:var(--accent);color:var(--on-accent);border-radius:99px;padding:0 7px;min-width:20px;text-align:center;line-height:18px}
+.viewer{margin-top:12px;border-top:1px solid var(--line);padding:12px 8px 0;font-size:12px;color:var(--muted);display:grid;gap:6px}
+.viewer b{color:var(--ink);font-weight:600}
+.seg{display:flex;border:1px solid var(--line-strong);border-radius:7px;overflow:hidden}
+.seg button{flex:1;border:0;background:transparent;padding:6px;font:inherit;font-size:12px;color:var(--ink);cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--bg)}
+
+main{min-width:0;display:grid;gap:18px}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.head>div{min-width:0}
+h1{font-family:var(--display);font-size:27px;line-height:1.15;margin:0;text-wrap:balance;font-weight:700;letter-spacing:-.015em}
+h2{font-family:var(--display);font-size:17px;margin:0;font-weight:600;text-wrap:balance}
+h3{font-size:14px;margin:0;font-weight:600}
+.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 4px}
+.sub{color:var(--muted);margin:4px 0 0;max-width:72ch}
+p{margin:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:12px;min-width:0;align-content:start}
+.panel-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
+.grid-side{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:18px;align-items:start}
+.grid-list{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:18px;align-items:start}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;gap:2px}
+.tile b{font-family:var(--display);font-size:30px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.tile span{color:var(--muted);font-size:12px}
+.btn{font:inherit;font-weight:500;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);border-radius:7px;padding:7px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-decoration:none;line-height:1.3}
+.btn:hover{background:var(--hover)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.danger{color:var(--bad)}
+.btn.small{padding:4px 9px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.btn:disabled:hover{background:var(--surface)}
+.btn.primary:disabled:hover{background:var(--accent)}
+a{color:var(--accent-ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;border-radius:99px;padding:2px 9px;white-space:nowrap;background:var(--neutral-soft);color:var(--neutral);line-height:18px}
+.chip::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.bad{background:var(--bad-soft);color:var(--bad)}
+.chip.info{background:var(--info-soft);color:var(--info)}
+.chip.accent{background:var(--accent-soft);color:var(--accent-ink)}
+.chip.wrap{white-space:normal}
+.filter{font:inherit;font-size:13px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);border-radius:99px;padding:4px 11px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.filter .n{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.filter.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.filter.on .n{color:var(--bg);opacity:.75}
+.tbl-wrap{overflow-x:auto;margin:0 -4px;padding:0 4px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11.5px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+tr.click{cursor:pointer}
+tr.click:hover td{background:var(--hover)}
+.num{font-variant-numeric:tabular-nums;text-align:right}
+.mono{font-family:var(--mono);font-size:12.5px}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.quote{border-left:3px solid var(--line-strong);padding:1px 0 1px 10px;color:var(--muted);font-size:13px;margin-top:4px;font-family:var(--mono);font-size:12px}
+.note{background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:10px 12px;font-size:13px}
+.note.warn{background:var(--warn-soft);color:var(--warn)}
+.note.bad{background:var(--bad-soft);color:var(--bad)}
+.tag{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;font-weight:600;color:var(--muted);border:1px solid var(--line-strong);border-radius:4px;padding:0 5px;white-space:nowrap}
+.tag.stretch{color:var(--warn);border-color:currentColor}
+label.f{display:grid;gap:4px;font-size:13px;font-weight:500;min-width:0}
+input[type=text],input[type=email],input[type=number],input[type=date],select,textarea{font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line-strong);border-radius:7px;padding:7px 9px;width:100%;min-width:0}
+textarea{resize:vertical;line-height:1.55}
+.form-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.err{color:var(--bad);font-size:13px}
+.sugg{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;padding:12px;border:1px solid var(--line);border-radius:8px;align-items:start}
+.sugg.accepted{border-color:var(--ok);background:var(--ok-soft)}
+.sugg.blocked{border-color:var(--bad);background:var(--bad-soft)}
+.sugg .val{font-weight:600}
+.sugg .src{font-size:12.5px;color:var(--muted)}
+.sugg.accepted .src,.sugg.blocked .src{color:var(--ink);opacity:.75}
+.kv{display:grid;grid-template-columns:150px minmax(0,1fr);gap:6px 14px;font-size:13.5px;margin:0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;min-width:0}
+.stack{display:flex;height:18px;border-radius:5px;overflow:hidden;background:var(--neutral-soft);gap:2px}
+.stack span{display:block;height:100%}
+.legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px 16px;font-size:13px}
+.legend div{display:flex;justify-content:space-between;gap:8px}
+.sw{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:7px;vertical-align:-1px}
+.bars{display:grid;gap:10px}
+.bar-row{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,2fr) 64px;gap:12px;align-items:center;font-size:13px}
+.bar{height:10px;background:var(--neutral-soft);border-radius:5px;overflow:hidden;display:flex}
+.bar span{display:block;height:100%}
+.doc{border:1px solid var(--line-strong);background:var(--paper);color:var(--paper-ink);padding:22px 18px;border-radius:4px;font-family:Georgia,'Times New Roman',serif;text-align:center;display:grid;gap:6px}
+.doc small{font-family:var(--mono);font-size:10px;letter-spacing:.12em;opacity:.65}
+.doc .big{font-size:19px;font-weight:700}
+.items{display:grid;gap:8px}
+.item{padding:10px 12px;border:1px solid var(--line);border-radius:8px;display:flex;justify-content:space-between;gap:10px;align-items:center;cursor:pointer;background:var(--surface);width:100%;text-align:left;font:inherit;color:inherit;flex-wrap:wrap}
+.item:hover{background:var(--hover)}
+.item.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.item .t{min-width:0}
+.group-h{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-top:6px;display:flex;justify-content:space-between}
+.checks{display:grid;gap:6px;font-size:13px;margin:0;padding:0;list-style:none}
+.checks li{display:flex;gap:8px;align-items:baseline}
+.dot{width:8px;height:8px;border-radius:50%;flex:none;transform:translateY(-1px)}
+pre.cv{white-space:pre-wrap;font-family:var(--mono);font-size:12.5px;background:var(--field);border:1px solid var(--line);border-radius:8px;padding:12px;margin:0;max-height:360px;overflow:auto;line-height:1.55}
+mark.pii{background:var(--warn-soft);color:var(--warn);padding:0 3px;border-radius:3px}
+.email{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:14px 16px;display:grid;gap:8px}
+.email pre{white-space:pre-wrap;font-family:var(--body);font-size:13.5px;margin:0;color:var(--ink)}
+.email .meta{font-size:12.5px;color:var(--muted);display:flex;gap:4px 14px;flex-wrap:wrap}
+.empty{padding:22px;text-align:center;color:var(--muted);border:1px dashed var(--line-strong);border-radius:8px}
+.drop{border:1.5px dashed var(--line-strong);border-radius:10px;padding:26px 16px;text-align:center;display:grid;gap:8px;justify-items:center;background:var(--field)}
+.radio{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:8px;cursor:pointer}
+.radio input{margin-top:3px}
+
+.login-wrap{display:grid;gap:12px;justify-items:center;padding-block:6vh 0}
+.login{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:18px}
+.demo-acc{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:16px}
+.linkish{font:inherit;font-size:12.5px;font-weight:400;background:none;border:0;padding:0;color:var(--accent-ink);text-decoration:underline;cursor:pointer}
+.outside{max-width:700px;margin:0 auto;display:grid;gap:16px}
+.ext-bar{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;font-size:13px;border:1px dashed var(--line-strong);border-radius:10px;padding:10px 12px;color:var(--muted)}
+.ext-bar select{width:auto}
+.ext-head{display:grid;gap:4px;padding:6px 0}
+.ext-head .co{font-family:var(--display);font-weight:700;font-size:15px;color:var(--accent-ink)}
+
+.scrim{position:fixed;inset:0;background:var(--scrim);display:grid;place-items:center;z-index:50;padding:16px max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px))}
+.dialog{background:var(--surface);border:1px solid var(--line);border-radius:12px;max-width:500px;width:100%;padding:20px;display:grid;gap:12px;max-height:90vh;overflow:auto}
+#toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translate(-50%,10px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;max-width:min(560px,calc(100% - 32px));opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:60;font-size:13.5px}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:1060px){.grid-list,.grid-side{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:860px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .side{position:static}
+  .nav{flex-direction:row;flex-wrap:wrap}
+  .nav .sep{width:100%;padding:8px 10px 0}
+  .grid2{grid-template-columns:minmax(0,1fr)}
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:480px){
+  .form-grid{grid-template-columns:minmax(0,1fr)}
+  .kv{grid-template-columns:minmax(0,1fr);gap:2px}
+  .kv dd{margin-bottom:8px}
+  .bar-row{grid-template-columns:minmax(0,1fr) 64px}
+  .bar-row .bar{grid-column:1/-1;order:3}
+  h1{font-size:23px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="demo-banner"><b>Clickable prototype</b><span>All people, companies and documents are synthetic demo data.</span><span>Emails go to a demo outbox, not real addresses.</span></div>
+<div id="app"></div>
+<div id="modal-root"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ---------- Demo data ---------- */
+const COMPANY = 'Northbridge Logistics';
+const RECRUITER = 'Laura Gómez';
+const HRLEAD = 'Carmen Soler';
+const DOMAIN = 'northbridge.example';
+const DEMO_PW = 'demo1234';
+const USERS = [
+  {name:RECRUITER, email:'laura.gomez@'+DOMAIN, type:'recruiter', status:'Active', added:'2026-09-01', pw:DEMO_PW},
+  {name:HRLEAD, email:'carmen.soler@'+DOMAIN, type:'hrlead', status:'Active', added:'2026-09-01', pw:DEMO_PW}
+];
+const UTYPE = {recruiter:'Recruiter', hrlead:'HR lead'};
+const TYPES = ['Years of experience','Degree level','Required skill','Certification','Language'];
+const PT = {
+  degree:{label:'Degree certificate'},
+  certificate:{label:'Certification'},
+  reference:{label:'Employment reference'},
+  github:{label:'GitHub profile'}
+};
+const SAMPLE_JD = "We are looking for a Finance Analyst to join our Madrid team, supporting monthly reporting and budgeting. You will have at least 3 years of experience in financial planning and analysis. A Bachelor's degree in Finance, Economics or Accounting is required. Advanced Excel and SQL are essential. ACCA or CIMA part-qualification is required. Experience with Power BI is a plus. Fluent English (C1) is required and Spanish is a plus. Ideal candidates are under 35 and native Spanish speakers.";
+
+const ROLES = [
+  {id:'r1', title:'Senior Data Engineer', dept:'Data & Analytics', location:'Barcelona (hybrid)', closing:'2026-11-20', status:'open',
+   criteria:[
+    {id:'c1', type:'Years of experience', value:'At least 5 years in data engineering', short:'5+ years data engineering', must:true},
+    {id:'c2', type:'Required skill', value:'Python', short:'Python', must:true},
+    {id:'c3', type:'Degree level', value:"Bachelor's in Computer Science or a related subject, First Class Honours", short:'First Class Honours degree', must:true},
+    {id:'c4', type:'Language', value:'English C1', short:'English C1', must:true}],
+   verify:['degree','reference','github']},
+  {id:'r2', title:'HR Coordinator', dept:'People', location:'Madrid', closing:'2026-11-28', status:'open',
+   criteria:[
+    {id:'c1', type:'Years of experience', value:'At least 2 years in an HR role', short:'2+ years HR', must:true},
+    {id:'c2', type:'Certification', value:'CIPD Level 3 or equivalent', short:'CIPD Level 3', must:true},
+    {id:'c3', type:'Language', value:'Spanish C1', short:'Spanish C1', must:true}],
+   verify:['certificate','reference']},
+  {id:'r3', title:'Finance Analyst', dept:'Finance', location:'Madrid', closing:'2026-12-05', status:'draft', criteria:[], verify:[], jd:SAMPLE_JD}
+];
+
+const M = (why,q)=>({r:'meets',why,q});
+const C = [
+  {id:'a1', role:'r1', name:'Amara Okafor', email:'amara.okafor@example.com', phone:'+44 7700 900123', city:'Leeds, UK', applied:'2026-10-14', status:'proof-requested',
+   claims:{degree:'BSc Computer Science, First Class Honours, University of Leeds (2018)', jobs:['Senior Data Engineer, Kestrel Freight (Mar 2025 – present)','Data Engineer, Datavale Ltd (Mar 2019 – Feb 2025)'], skills:'Python, SQL, Spark, Airflow, dbt', languages:'English (C2), Yoruba', certs:'—', github:'github.com/amara-okafor-data'},
+   exp:'Mar 2019 – Feb 2025 (5 y 11 m) + Mar 2025 – Nov 2026 (1 y 8 m) = 7 years 7 months',
+   res:{c1:M('7 years 7 months in two data engineering jobs.','Data Engineer, Datavale Ltd (Mar 2019 – Feb 2025)'), c2:M('Python is listed in skills.','Python, SQL, Spark, Airflow, dbt'), c3:M('Computer Science degree with First Class Honours.','BSc Computer Science, First Class Honours, University of Leeds (2018)'), c4:M('English at C2.','English (C2), Yoruba')},
+   proofs:[{type:'degree', state:'pending', file:'okafor_bsc_certificate.pdf'},
+           {type:'reference', state:'requested', referee:{name:'Dr Helen Brooks', email:'h.brooks@datavale.example', job:'Data Engineer', employer:'Datavale Ltd', dates:'Mar 2019 – Feb 2025'}},
+           {type:'github', state:'pending'}], gh:'exists'},
+  {id:'a2', role:'r1', name:'Lucas Ferreira', email:'lucas.ferreira@example.com', phone:'+34 600 000 112', city:'Valencia', applied:'2026-10-12', status:'interview-ready',
+   claims:{degree:'BSc Computer Science, First Class Honours, University of Manchester (2016)', jobs:['Lead Data Engineer, Portline Shipping (Sep 2021 – present)','Data Engineer, Northwind Analytics (Sep 2016 – Aug 2021)'], skills:'Python, Scala, Kafka, SQL', languages:'English (C2), Portuguese, Spanish (B2)', certs:'—', github:'github.com/lferreira-pipelines'},
+   exp:'Sep 2016 – Aug 2021 (4 y 11 m) + Sep 2021 – Nov 2026 (5 y 2 m) = 10 years 1 month',
+   res:{c1:M('10 years 1 month in data engineering jobs.','Data Engineer, Northwind Analytics (Sep 2016 – Aug 2021)'), c2:M('Python is listed in skills.','Python, Scala, Kafka, SQL'), c3:M('Computer Science degree with First Class Honours.','BSc Computer Science, First Class Honours, University of Manchester (2016)'), c4:M('English at C2.','English (C2), Portuguese, Spanish (B2)')},
+   proofs:[{type:'degree', state:'verified', file:'ferreira_degree.pdf', by:RECRUITER, at:'2026-10-24 10:12'},
+           {type:'reference', state:'verified', referee:{name:'Marta Silva', email:'m.silva@northwind.example', job:'Data Engineer', employer:'Northwind Analytics', dates:'Sep 2016 – Aug 2021'}, answer:{v:'yes'}, by:RECRUITER, at:'2026-10-27 15:40'},
+           {type:'github', state:'verified', by:RECRUITER, at:'2026-10-27 15:44'}], gh:'exists'},
+  {id:'a3', role:'r1', name:'Mei Tanaka', email:'mei.tanaka@example.com', phone:'+44 7700 900456', city:'London', applied:'2026-10-13', status:'unsuccessful',
+   claims:{degree:'BSc Mathematics, First Class Honours, University College London (2020)', jobs:['Junior Data Engineer, Brightpath Retail (Jun 2021 – Oct 2024)','Data Analyst Intern, Brightpath Retail (Jul 2020 – May 2021)'], skills:'Python, SQL, dbt', languages:'English (C1), Japanese', certs:'—', github:'—'},
+   exp:'Jun 2021 – Oct 2024 = 3 years 5 months in data engineering (the Data Analyst internship is not counted)',
+   res:{c1:{r:'missing', why:'Only 3 years 5 months in a data engineering job. The role asks for at least 5.', q:'Junior Data Engineer, Brightpath Retail (Jun 2021 – Oct 2024)', gap:'your CV shows 3 years 5 months of data engineering experience (June 2021 to October 2024)'},
+        c2:M('Python is listed in skills.','Python, SQL, dbt'), c3:M('Mathematics counts as a related subject. First Class Honours.','BSc Mathematics, First Class Honours, University College London (2020)'), c4:M('English at C1.','English (C1), Japanese')}},
+  {id:'a4', role:'r1', name:'Daniel Ruiz', email:'daniel.ruiz@example.com', phone:'+34 600 000 245', city:'Seville', applied:'2026-10-15', status:'screened',
+   claims:{profile:'5+ years working in data, building pipelines and dashboards.', degree:'BSc Statistics, First Class Honours, University of Bath (2019)', jobs:['Data Analyst, Mercato Group (Jan 2021 – present)','Reporting Assistant, Mercato Group (Sep 2019 – Dec 2020)'], skills:'Python, SQL, Power BI', languages:'Spanish (native), English (C1)', certs:'—', github:'—'},
+   exp:'Sep 2019 – Nov 2026 = 7 years 2 months in data roles. The job titles are analyst roles, so the data engineering share is unclear.',
+   res:{c1:{r:'review', why:'The CV says "5+ years working in data", but the job titles are Data Analyst and Reporting Assistant. It is not clear how much of this is data engineering.', q:'5+ years working in data, building pipelines and dashboards.'},
+        c2:M('Python is listed in skills.','Python, SQL, Power BI'), c3:M('Statistics counts as a related subject. First Class Honours.','BSc Statistics, First Class Honours, University of Bath (2019)'), c4:M('English at C1.','Spanish (native), English (C1)')}},
+  {id:'a5', role:'r1', name:'Sofia Marín', email:'sofia.marin@example.com', phone:'+34 600 000 318', city:'Barcelona', applied:'2026-10-16', status:'screened',
+   claims:{degree:'BSc Computer Science, First Class Honours, University of Edinburgh (2017)', jobs:['Data Engineer, Ondara Telecom (Jan 2023 – present)','Data Engineer, Tidewater Energy (Jul 2017 – Dec 2022)'], skills:'Python, Spark, AWS Glue, SQL', languages:'Spanish (native), Catalan, English (C1)', certs:'—', github:'github.com/sofia-marin-de'},
+   exp:'Jul 2017 – Dec 2022 (5 y 6 m) + Jan 2023 – Nov 2026 (3 y 11 m) = 9 years 5 months',
+   res:{c1:M('9 years 5 months in data engineering jobs.','Data Engineer, Tidewater Energy (Jul 2017 – Dec 2022)'), c2:M('Python is listed in skills.','Python, Spark, AWS Glue, SQL'), c3:M('Computer Science degree with First Class Honours.','BSc Computer Science, First Class Honours, University of Edinburgh (2017)'), c4:M('English at C1.','Spanish (native), Catalan, English (C1)')},
+   gh:'flaky'},
+  {id:'a6', role:'r1', name:'Tom Becker', email:'tom.becker@example.com', phone:'+49 151 0000 0321', city:'Berlin', applied:'2026-10-12', status:'feedback-sent',
+   claims:{degree:'BSc Computer Science, Upper Second-Class Honours (2:1), University of Bristol (2017)', jobs:['Data Engineer, Halden Insurance (Aug 2017 – present)'], skills:'Python, SQL, Airflow', languages:'German (native), English (C1)', certs:'—', github:'—'},
+   exp:'Aug 2017 – Nov 2026 = 9 years 3 months',
+   res:{c1:M('9 years 3 months as a data engineer.','Data Engineer, Halden Insurance (Aug 2017 – present)'), c2:M('Python is listed in skills.','Python, SQL, Airflow'),
+        c3:{r:'missing', why:'The degree is Upper Second-Class Honours (2:1). The role asks for First Class Honours.', q:'BSc Computer Science, Upper Second-Class Honours (2:1), University of Bristol (2017)', gap:'your CV states an Upper Second-Class Honours (2:1) degree'},
+        c4:M('English at C1.','German (native), English (C1)')}},
+  {id:'a7', role:'r1', name:'Priya Nair', email:'priya.nair@example.com', phone:'+44 7700 900789', city:'Manchester', applied:'2026-10-17', status:'needs-entry', claims:null, res:null,
+   failReason:'The CV is a scanned image with no readable text, so no claims could be extracted. The candidate has not been screened out.'},
+  {id:'a8', role:'r1', name:'Jonas Lindqvist', email:'jonas.lindqvist@example.com', phone:'+46 70 000 0412', city:'Stockholm', applied:'2026-10-13', status:'proof-requested',
+   claims:{degree:'BSc Software Engineering, First Class Honours, University of Glasgow (2015)', jobs:['Senior Data Engineer, Nordvik Media (Mar 2020 – present)','Data Engineer, Fjell Systems (Jun 2015 – Feb 2020)'], skills:'Python, Go, Kafka', languages:'Swedish (native), English (C2)', certs:'—', github:'github.com/jlindqvist-data'},
+   exp:'Jun 2015 – Feb 2020 (4 y 9 m) + Mar 2020 – Nov 2026 (6 y 8 m) = 11 years 5 months',
+   res:{c1:M('11 years 5 months in data engineering jobs.','Data Engineer, Fjell Systems (Jun 2015 – Feb 2020)'), c2:M('Python is listed in skills.','Python, Go, Kafka'), c3:M('Software Engineering counts as a related subject. First Class Honours.','BSc Software Engineering, First Class Honours, University of Glasgow (2015)'), c4:M('English at C2.','Swedish (native), English (C2)')},
+   proofs:[{type:'degree', state:'verified', file:'lindqvist_degree.pdf', by:RECRUITER, at:'2026-10-28 11:02'},
+           {type:'reference', state:'pending', referee:{name:'Erik Holm', email:'erik.holm@fjell.example', job:'Data Engineer', employer:'Fjell Systems', dates:'Jun 2015 – Feb 2020'}, answer:{v:'yes'}},
+           {type:'github', state:'failed', note:'GitHub says this profile does not exist (404).', failText:'we could not find the GitHub profile listed on your CV (github.com/jlindqvist-data)'}], gh:'notfound'},
+
+  {id:'b1', role:'r2', name:'Clara Domínguez', email:'clara.dominguez@example.com', phone:'+34 600 000 531', city:'Granada', applied:'2026-10-20', status:'screened',
+   claims:{degree:'Grado en Relaciones Laborales y Recursos Humanos, Universidad de Granada (2019)', jobs:['HR Assistant, Grupo Alhambra Hoteles (Sep 2022 – present)'], skills:'Payroll, onboarding, Factorial HR', languages:'Spanish (native), English (B2)', certs:'CIPD Level 3 Foundation Certificate in People Practice (2023)', github:'—'},
+   exp:'Sep 2022 – Nov 2026 = 4 years 2 months in HR',
+   res:{c1:M('4 years 2 months as an HR Assistant.','HR Assistant, Grupo Alhambra Hoteles (Sep 2022 – present)'), c2:M('CIPD Level 3 listed.','CIPD Level 3 Foundation Certificate in People Practice (2023)'), c3:M('Spanish is the native language.','Spanish (native), English (B2)')}},
+  {id:'b2', role:'r2', name:'Ahmed Haddad', email:'ahmed.haddad@example.com', phone:'+34 600 000 662', city:'Madrid', applied:'2026-10-19', status:'proof-requested',
+   claims:{degree:'BA Business Administration, Universidad Rey Juan Carlos (2018)', jobs:['HR Coordinator, Brisa Logistics (Feb 2021 – present)'], skills:'Recruiting, HR records, Personio', languages:'Arabic (native), Spanish (C1), French (B2), English (B2)', certs:'CIPD Level 3 Foundation Certificate (2022)', github:'—'},
+   exp:'Feb 2021 – Nov 2026 = 5 years 9 months in HR',
+   res:{c1:M('5 years 9 months as an HR Coordinator.','HR Coordinator, Brisa Logistics (Feb 2021 – present)'), c2:M('CIPD Level 3 listed.','CIPD Level 3 Foundation Certificate (2022)'), c3:M('Spanish at C1.','Arabic (native), Spanish (C1), French (B2), English (B2)')},
+   proofs:[{type:'certificate', state:'pending', file:'haddad_cipd_l3.pdf'},
+           {type:'reference', state:'requested', referee:{name:'Nuria Castell', email:'n.castell@brisa.example', job:'HR Coordinator', employer:'Brisa Logistics', dates:'Feb 2021 – present'}}]},
+  {id:'b3', role:'r2', name:'Lucía Romero', email:'lucia.romero@example.com', phone:'+34 600 000 774', city:'Toledo', applied:'2026-10-21', status:'screened',
+   claims:{degree:'Grado en Psicología, Universidad Complutense de Madrid (2020)', jobs:['HR Generalist, Sol y Mar Retail (Apr 2021 – present)'], skills:'Employee relations, recruiting', languages:'Spanish (native), English (B1)', certs:'—', github:'—'},
+   exp:'Apr 2021 – Nov 2026 = 5 years 7 months in HR',
+   res:{c1:M('5 years 7 months as an HR Generalist.','HR Generalist, Sol y Mar Retail (Apr 2021 – present)'),
+        c2:{r:'missing', why:'No CIPD or equivalent HR certification on the CV.', q:'(no certifications section)', gap:'your CV does not list a CIPD Level 3 or equivalent HR certification'},
+        c3:M('Spanish is the native language.','Spanish (native), English (B1)')}}
+];
+
+/* Claims the prototype "finds" when the sample CSV rows are screened */
+const PRESETS = {
+  'Elena Vidal':{phone:'+34 600 000 815', city:'Bilbao',
+    claims:{degree:'Grado en Administración y Dirección de Empresas, Universidad de Deusto (2021)', jobs:['People Operations Assistant, Verde Foods (Jan 2023 – present)'], skills:'Onboarding, HR records, Excel', languages:'Spanish (native), Basque, English (C1)', certs:'CIPD Level 3 Foundation Certificate (2024)', github:'—'},
+    exp:'Jan 2023 – Nov 2026 = 3 years 10 months in HR',
+    res:{c1:M('3 years 10 months in a people operations job.','People Operations Assistant, Verde Foods (Jan 2023 – present)'), c2:M('CIPD Level 3 listed.','CIPD Level 3 Foundation Certificate (2024)'), c3:M('Spanish is the native language.','Spanish (native), Basque, English (C1)')}},
+  'Fatima Zahra Benali':{phone:'+34 600 000 927', city:'Málaga',
+    claims:{degree:'Grado en Relaciones Laborales, Universidad de Málaga (2024)', jobs:['HR Administrator, Clínica Mar (May 2025 – present)'], skills:'HR administration, scheduling', languages:'Spanish (C2), Arabic (native), French (B2)', certs:'CIPD Level 3 Foundation Certificate (2025)', github:'—'},
+    exp:'May 2025 – Nov 2026 = 1 year 6 months in HR',
+    res:{c1:{r:'missing', why:'1 year 6 months in HR. The role asks for at least 2 years.', q:'HR Administrator, Clínica Mar (May 2025 – present)', gap:'your CV shows 1 year 6 months of HR experience (May 2025 to November 2026)'},
+         c2:M('CIPD Level 3 listed.','CIPD Level 3 Foundation Certificate (2025)'), c3:M('Spanish at C2.','Spanish (C2), Arabic (native), French (B2)')}}
+};
+
+const AUDIT = [
+  ['2026-10-10 09:00', RECRUITER, 'Senior Data Engineer', 'Opened role with 4 must-haves. Proof needed: degree, employment reference, GitHub.'],
+  ['2026-10-11 10:30', RECRUITER, 'HR Coordinator', 'Opened role with 3 must-haves. Proof needed: certification, employment reference.'],
+  ['2026-10-18 11:20', 'System', 'Senior Data Engineer', 'Screened 8 candidates (flags only). 1 marked "needs manual entry".'],
+  ['2026-10-20 09:05', RECRUITER, 'Lucas Ferreira', 'Shortlisted.'],
+  ['2026-10-20 09:05', 'System', 'Lucas Ferreira', 'Proof requests sent: Degree certificate, Employment reference, GitHub profile.'],
+  ['2026-10-20 09:07', RECRUITER, 'Jonas Lindqvist', 'Shortlisted.'],
+  ['2026-10-20 09:07', 'System', 'Jonas Lindqvist', 'GitHub check: failed, profile not found.'],
+  ['2026-10-22 14:15', RECRUITER, 'Tom Becker', 'Marked unsuccessful. Feedback draft created.'],
+  ['2026-10-22 14:31', RECRUITER, 'Tom Becker', 'Feedback approved and sent.'],
+  ['2026-10-23 09:40', RECRUITER, 'Amara Okafor', 'Shortlisted.'],
+  ['2026-10-24 10:12', RECRUITER, 'Lucas Ferreira', 'Verified: Degree certificate.'],
+  ['2026-10-25 12:00', RECRUITER, 'Ahmed Haddad', 'Shortlisted.'],
+  ['2026-10-27 15:40', RECRUITER, 'Lucas Ferreira', 'Verified: Employment reference.'],
+  ['2026-10-27 15:44', RECRUITER, 'Lucas Ferreira', 'Verified: GitHub profile. All items verified, now interview-ready.'],
+  ['2026-10-28 11:02', RECRUITER, 'Jonas Lindqvist', 'Verified: Degree certificate.'],
+  ['2026-10-30 16:20', RECRUITER, 'Mei Tanaka', 'Marked unsuccessful. Feedback draft created.'],
+  ['2026-11-01 18:45', 'Candidate', 'Ahmed Haddad', 'Uploaded: Certification (haddad_cipd_l3.pdf).'],
+  ['2026-11-02 08:10', 'Referee', 'Jonas Lindqvist', 'Employment reference answered by Erik Holm.'],
+  ['2026-11-02 19:03', 'Candidate', 'Amara Okafor', 'Uploaded: Degree certificate (okafor_bsc_certificate.pdf).']
+].map(([t,user,subject,action])=>({t,user,subject,action}));
+
+const OUTBOX = [];
+const S = {viewer:null, user:null, after:'dashboard', login:{email:'',err:''}, acc:null, invite:null, role:'r1', filter:'all', cand:'a5', v:null, fb:'a3', dash:'r1', upload:'a1', ref:'a1',
+  form:null, sugg:[], suggRan:false, csvRole:'r2', csvText:'name,email,cv_file\nElena Vidal,elena.vidal@example.com,elena_vidal_cv.pdf\nMarc Puig,,marc_puig_cv.pdf\nFatima Zahra Benali,f.benali@example.com,fatima_benali_cv.pdf\nOwen Hughes,owen.hughes@example.com,', csvRows:null, addTab:'csv',
+  settings:{retention:30, reminder:3, sender:'Northbridge Logistics Recruiting', senderEmail:'jobs@northbridge.example'}, nextId:1, piiView:false};
+
+/* ---------- Helpers ---------- */
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cand = id=>C.find(c=>c.id===id);
+const roleOf = c=>ROLES.find(r=>r.id===c.role);
+const role = id=>ROLES.find(r=>r.id===id);
+const first = n=>n.split(' ')[0];
+function stamp(){const d=new Date();return '2026-11-05 '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+function fmtDate(s){const [y,m,d]=s.split('-');return `${+d} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1]} ${y}`}
+function log(user,subject,action){AUDIT.push({t:stamp(),user,subject,action})}
+function chip(k,t,extra=''){return `<span class="chip ${k} ${extra}">${esc(t)}</span>`}
+const ro = ()=>S.viewer==='hrlead';
+const dis = ()=>ro()?' disabled title="Read-only in the HR lead view"':'';
+
+const STATUS = {
+  'applied':['Awaiting screening',''], 'needs-entry':['Needs manual entry','warn'], 'screened':['Screened, awaiting decision','info'],
+  'shortlisted':['Shortlisted, proof not sent yet','warn'],
+  'proof-requested':['Proof requested','accent'], 'interview-ready':['Interview-ready','ok'],
+  'unsuccessful':['Unsuccessful, feedback pending','bad'], 'feedback-sent':['Unsuccessful, feedback sent','']
+};
+const RES = {meets:['Meets','ok'], missing:['Missing','bad'], review:['Needs human review','warn']};
+const PST = {requested:['Waiting for candidate',''], pending:['Pending your review','warn'], verified:['Verified','ok'], failed:['Failed','bad'], 'no-response':['No response','bad'], unavailable:['Check unavailable, retry','warn']};
+const STAGES = [
+  ['screen','To screen','var(--s1)'], ['decide','Awaiting decision','var(--info)'], ['short','Shortlisted, proof not sent','var(--warn)'], ['proof','Proof requested','var(--accent)'],
+  ['ready','Interview-ready','var(--ok)'], ['unsucc','Unsuccessful, feedback pending','var(--bad)'], ['sent','Feedback sent','var(--s6)']];
+function stageOf(c){return {'applied':'screen','needs-entry':'screen','screened':'decide','shortlisted':'short','proof-requested':'proof','interview-ready':'ready','unsuccessful':'unsucc','feedback-sent':'sent'}[c.status]}
+function statusChip(c){const [t,k]=STATUS[c.status];return chip(k,t)}
+/* Wave 1, W4: passed every check = meets all must-haves AND every proof item verified by a recruiter (no override) */
+const passedAll=c=>c.res&&overall(c)?.k==='ok'&&c.status==='interview-ready'&&!c.override&&(c.proofs||[]).length>0&&c.proofs.every(p=>p.state==='verified');
+/* Wave 1, W5: days since the proof request, from the audit log */
+function proofSentOn(c){const a=AUDIT.filter(x=>x.subject===c.name&&/^(Proof requests sent|Shortlisted)/.test(x.action)).map(x=>x.t).sort()[0];return a?a.slice(0,10):null}
+function daysSince(d){return d?Math.round((new Date('2026-11-05')-new Date(d))/864e5):null}
+const recName=()=>S.user?.name||RECRUITER;
+
+function overall(c){
+  if(!c.res) return null;
+  const r=roleOf(c);
+  const miss=r.criteria.filter(k=>c.res[k.id]?.r==='missing');
+  if(miss.length) return {k:'bad',t:'Missing: '+miss.map(k=>k.short).join(', ')};
+  if(r.criteria.some(k=>c.res[k.id]?.r==='review')) return {k:'warn',t:'Needs human review'};
+  return {k:'ok',t:'Meets all must-haves'};
+}
+function overallChip(c){
+  if(c.status==='applied') return `<span class="muted small">Not screened yet</span>`;
+  if(!c.res) return chip('warn','Needs manual entry');
+  const o=overall(c);return chip(o.k,o.t,'wrap');
+}
+function proofProgress(c){
+  if(!c.proofs) return '<span class="muted">—</span>';
+  const v=c.proofs.filter(p=>p.state==='verified').length;
+  const bad=c.proofs.some(p=>['failed','no-response'].includes(p.state));
+  return `<span class="mono">${v}/${c.proofs.length}</span> <span class="muted small">verified</span>${bad?' '+chip('bad','issue'):''}`;
+}
+function parseJob(s){const m=s.match(/^(.*?), (.*?) \((.*)\)$/);return m?{job:m[1],employer:m[2],dates:m[3]}:{job:s,employer:'',dates:''}}
+function critByType(r,t){return r.criteria.find(k=>k.type===t)}
+
+function whyRequested(c,p){
+  const r=roleOf(c);
+  if(p.type==='degree'){const k=critByType(r,'Degree level');return `This role requires: ${k?k.value:'a degree'}. Your CV states: ${c.claims.degree}.`}
+  if(p.type==='certificate'){const k=critByType(r,'Certification');return `This role requires: ${k?k.value:'a certification'}. Your CV states: ${c.claims.certs}.`}
+  if(p.type==='reference') return `To confirm the job title and dates on your CV. We only ask your referee to confirm these facts, not for an opinion about you.`;
+  if(p.type==='github') return `This role checks the GitHub profile on your CV (${c.claims.github}). We check that it exists, and a recruiter looks at it. You don't need to do anything.`;
+  return '';
+}
+function claimFor(c,p){
+  if(p.type==='degree') return c.claims.degree;
+  if(p.type==='certificate') return c.claims.certs;
+  if(p.type==='reference') return p.referee?`${p.referee.job}, ${p.referee.employer} (${p.referee.dates})`:c.claims.jobs.join('; ');
+  if(p.type==='github') return c.claims.github;
+}
+function requirementFor(c,p){
+  const r=roleOf(c);
+  if(p.type==='degree') return critByType(r,'Degree level')?.value||'—';
+  if(p.type==='certificate') return critByType(r,'Certification')?.value||'—';
+  if(p.type==='reference') return critByType(r,'Years of experience')?.value||'Employment as stated on the CV';
+  if(p.type==='github') return 'Profile listed on the CV exists and matches the claimed work';
+}
+
+/* Wave 1, W5: creates the proof items and sends one email; called only after the recruiter confirms */
+function sendProofRequest(c){
+  const r=roleOf(c);
+  c.status='proof-requested';
+  c.proofs=r.verify.map(t=>({type:t,state:'requested'}));
+  const gh=c.proofs.find(p=>p.type==='github');
+  if(gh){
+    if(!c.claims.github||c.claims.github==='—'){gh.state='failed';gh.note='No GitHub profile listed on the CV.';gh.failText='your CV does not list a GitHub profile'}
+    else if(c.gh==='notfound'){gh.state='failed';gh.note='GitHub says this profile does not exist (404).'}
+    else if(c.gh==='flaky'){gh.state='unavailable';gh.note='GitHub API rate limit reached. Not marked as failed.'}
+    else gh.state='pending';
+    log('System',c.name,`GitHub check: ${PST[gh.state][0].toLowerCase()}.`);
+  }
+  const n=c.proofs.filter(p=>p.type!=='github').length;
+  log(RECRUITER,c.name,`Proof requests sent: ${c.proofs.map(p=>PT[p.type].label).join(', ')}.`);
+  OUTBOX.push({t:stamp(),to:c.email,subject:`${r.title}: please send proof for ${n} item${n===1?'':'s'}`,body:`Hi ${first(c.name)},
+
+You've been shortlisted for the ${r.title} role. Before we book an interview, please send proof of ${n} claim${n===1?'':'s'} from your CV. It takes about 5 minutes.
+
+Open your secure upload page (expires 17 Nov 2026).
+
+${COMPANY} Recruiting`,link:{k:'upload',c:c.id}});
+  S.upload=c.id;
+}
+
+/* ---------- Feedback drafting and safety check ---------- */
+function genFeedback(c){
+  const r=roleOf(c), n=first(c.name);
+  /* Wave 1, W2: every reason quotes the CV line or record it rests on, with the working for counted claims */
+  const cvQuote=q=>q.startsWith('(')?`Your CV: ${q.slice(1,-1)}.`:`Your CV: “${q}”.`;
+  const bullets=[
+    ...r.criteria.filter(k=>c.res?.[k.id]?.r==='missing').map(k=>`• ${k.value}: ${c.res[k.id].gap}. ${cvQuote(c.res[k.id].q)}${k.type==='Years of experience'&&c.exp?` Worked out from your job dates: ${c.exp}.`:''}`),
+    ...(c.proofs||[]).filter(p=>['failed','no-response'].includes(p.state)).map(p=>`• ${PT[p.type].label}: ${p.state==='failed'?(p.failText||'we could not verify this claim'):'we did not receive this document'}. Recorded: ${p.state==='failed'?(p.note?`“${p.note}”`:'item marked failed by a recruiter'):'no file received after the reminder'}.`)
+  ];
+  /* Wave 1, W1: name the person who decided, and give a monitored way to ask for a re-check */
+  const who=recName();
+  const decided=`A recruiter, ${who}, reviewed your CV and confirmed this decision.`;
+  const recheck=`Disagree with a reason? Reply to this email or write to ${who} at ${S.settings.senderEmail} and ask for a re-check. A person reads every request and replies within 5 working days.`;
+  const sign=`Kind regards,\n${who}\nRecruiter, ${COMPANY}`;
+  const text = bullets.length
+    ? `Dear ${n},\n\n${decided} We will not be moving forward with your application for the ${r.title} role at ${COMPANY}.\n\nThe decision was based on the role's essential requirements:\n\n${bullets.join('\n')}\n\n${recheck}\n\nThank you for the time you put into your application. If you gain this experience or qualification, we would be glad to see a future application from you.\n\n${sign}`
+    : `Dear ${n},\n\n${decided} We will not be moving forward with your application for the ${r.title} role at ${COMPANY}.\n\n${recheck}\n\nYour details will be kept for ${S.settings.retention} days after the role closes and then deleted.\n\n${sign}`;
+  return {text, original:text, allowed:bullets, specific:bullets.length>0, state:'draft'};
+}
+const PROTECTED = [
+  [/\b(age|aged|old|older|young|younger|years old|under \d\d|over \d\d)\b/i,'age'],
+  [/\b(gender|male|female|pregnan\w*|maternity|paternity)\b/i,'gender or pregnancy'],
+  [/\b(nationality|foreign(er)?|native speakers?|race|racial|ethnic\w*|religio\w*)\b/i,'nationality, race or religion'],
+  [/\b(married|marital|children|kids|family)\b/i,'marital or family status'],
+  [/\b(disab\w*|illness|health)\b/i,'disability or health']
+];
+function checkDraft(text, allowed){
+  const issues=[];
+  for(const [re,label] of PROTECTED){const m=text.match(re); if(m) issues.push(`Mentions a protected characteristic (${label}): "${m[0]}"`)}
+  const o=text.match(/\b(other (candidates|applicants)|ranked|ranking|scored?|scores|stronger (candidates?|applicants?))\b/i);
+  if(o) issues.push(`Refers to other candidates, ranking or scores: "${o[0]}"`);
+  text.split('\n').map(l=>l.trim()).filter(l=>/^(•|-|\*)\s/.test(l)).forEach(l=>{ if(allowed.includes(l)) return;
+    const s=`"${l.slice(0,70)}${l.length>70?'…':''}"`;
+    issues.push(/Your CV:|Recorded:/.test(l)?`Reason not in the screening record: ${s}`:`Reason has no quoted CV line or record: ${s}`) });
+  return issues;
+}
+
+/* ---------- Seed generated content ---------- */
+(function seed(){
+  const a3=cand('a3'); a3.feedback=genFeedback(a3);
+  const a6=cand('a6'); a6.feedback=genFeedback(a6); a6.feedback.state='sent'; a6.feedback.sentAt='2026-10-22 14:31'; a6.feedback.by=RECRUITER;
+  OUTBOX.push(
+    {t:'2026-10-20 09:05', to:'lucas.ferreira@example.com', subject:'Senior Data Engineer: please send proof for 3 items', body:`Hi Lucas,\n\nYou've been shortlisted for the Senior Data Engineer role. Before we book an interview, please send proof of 3 claims from your CV. It takes about 5 minutes.\n\nOpen your secure upload page (expires 3 Nov 2026).\n\n${COMPANY} Recruiting`, link:{k:'upload',c:'a2'}},
+    {t:'2026-10-22 14:31', to:'tom.becker@example.com', subject:'Your application for Senior Data Engineer', body:a6.feedback.text, link:{k:'recheck',c:'a6'}},
+    {t:'2026-10-23 09:40', to:'amara.okafor@example.com', subject:'Senior Data Engineer: please send proof for 3 items', body:`Hi Amara,\n\nYou've been shortlisted for the Senior Data Engineer role. Before we book an interview, please send proof of 3 claims from your CV. It takes about 5 minutes.\n\nOpen your secure upload page (expires 6 Nov 2026).\n\n${COMPANY} Recruiting`, link:{k:'upload',c:'a1'}},
+    {t:'2026-10-25 12:00', to:'ahmed.haddad@example.com', subject:'HR Coordinator: please send proof for 2 items', body:`Hi Ahmed,\n\nYou've been shortlisted for the HR Coordinator role. Before we book an interview, please send proof of 2 claims from your CV.\n\nOpen your secure upload page (expires 8 Nov 2026).\n\n${COMPANY} Recruiting`, link:{k:'upload',c:'b2'}},
+    {t:'2026-11-02 19:10', to:'h.brooks@datavale.example', subject:'Please confirm employment details for Amara Okafor', body:`Hello Dr Brooks,\n\nAmara Okafor has applied for a role at ${COMPANY} and gave your name as a referee, with their consent.\n\nPlease confirm their job title and dates at Datavale Ltd. It takes under a minute, and we do not ask for your opinion of the candidate.\n\nOpen the confirmation form.\n\n${COMPANY} Recruiting`, link:{k:'referee',c:'a1'}}
+  );
+})();
+
+/* ---------- UI primitives ---------- */
+let toastTimer;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3800)}
+function modal({title, body, input=null, confirm='Confirm', danger=false, onOk}){
+  const root=$('#modal-root');
+  root.innerHTML=`<div class="scrim" id="scrim"><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="mt">
+    <h2 id="mt">${esc(title)}</h2><div class="muted" style="display:grid;gap:8px">${body}</div>
+    ${input?`<label class="f" for="modal-input">${esc(input.label)}${input.required?'':' <span class="muted">(optional)</span>'}<textarea id="modal-input" rows="3" placeholder="${esc(input.placeholder||'')}"></textarea></label><div class="err" id="modal-err" hidden></div>`:''}
+    <div class="row" style="justify-content:flex-end"><button class="btn" id="m-cancel">Cancel</button><button class="btn ${danger?'danger':'primary'}" id="m-ok">${esc(confirm)}</button></div></div></div>`;
+  const close=()=>{root.innerHTML='';document.removeEventListener('keydown',onKey)};
+  const onKey=e=>{if(e.key==='Escape')close()};
+  document.addEventListener('keydown',onKey);
+  $('#m-cancel').onclick=close;
+  $('#scrim').onclick=e=>{if(e.target.id==='scrim')close()};
+  $('#m-ok').onclick=()=>{
+    const v=input?$('#modal-input').value.trim():'';
+    if(input&&input.required&&!v){const e=$('#modal-err');e.hidden=false;e.textContent='Write a reason. It is saved in the audit log.';return}
+    close();onOk(v);
+  };
+  (input?$('#modal-input'):$('#m-ok')).focus();
+}
+function guard(){if(ro()){toast('The HR lead view is read-only. Switch to the recruiter view to make changes.');return false}return true}
+
+/* ---------- Actions ---------- */
+const A = {
+  go(h){ if(location.hash==='#'+h) render(); else location.hash=h; },
+  demoFill(email){S.login={email,err:''};render();$('#lg-pw').value=DEMO_PW;$('#lg-pw').focus()},
+  forgot(){toast('In the full app, this emails a password reset link.')},
+  login(){
+    const email=$('#lg-email').value.trim().toLowerCase(), pw=$('#lg-pw').value;
+    S.login.email=email;
+    const u=USERS.find(x=>x.email.toLowerCase()===email);
+    if(!email||!pw) S.login.err='Enter your work email and password.';
+    else if(!u) S.login.err='No account uses this email. Ask a recruiter at your company to create one.';
+    else if(u.status!=='Active') S.login.err='This account is not active yet. Use the link in your invitation email to set a password.';
+    else if(pw!==u.pw) S.login.err=u.pw===DEMO_PW?`Wrong password. Demo accounts use the password ${DEMO_PW}.`:'Wrong password. Use the password you set from your invitation.';
+    else {
+      S.login={email:'',err:''};S.user=u;S.viewer=u.type;S.form=null;
+      const to=S.after&&S.after!=='login'?S.after:'dashboard';S.after='dashboard';
+      A.go(to);toast(`Signed in as ${u.name} (${UTYPE[u.type]}).`);return;
+    }
+    render();$('#lg-pw')?.focus();
+  },
+  logout(){const n=S.user.name;S.user=null;S.viewer=null;S.after='dashboard';A.go('login');toast(`${n} signed out.`)},
+  accInput(k,v){S.acc[k]=v},
+  createAccount(){
+    if(S.viewer!=='recruiter'){toast('Only recruiters can create accounts.');return}
+    const a=S.acc, email=a.email.trim().toLowerCase(), name=a.name.trim();
+    a.err='';
+    if(!name) a.err='Enter the person\'s full name.';
+    else if(!/^\S+@\S+\.\S+$/.test(email)) a.err='Enter a valid email address.';
+    else if(!email.endsWith('@'+DOMAIN)) a.err=`Use a ${COMPANY} work email ending in @${DOMAIN}.`;
+    else if(USERS.some(u=>u.email.toLowerCase()===email)) a.err='An account with this email already exists.';
+    else if(!a.type) a.err='Choose an account type.';
+    if(a.err){render();return}
+    const u={name,email,type:a.type,status:'Invited',added:'2026-11-05',pw:null,invitedBy:S.user.name,expires:'12 Nov 2026',expired:false};
+    USERS.push(u);
+    log(S.user.name,'Accounts',`Created ${UTYPE[a.type]} account for ${name} (${email}). Invitation sent.`);
+    sendInvite(u);
+    S.acc=null;S.invite=email;A.go('company-settings');toast(`Account created for ${name}. Invitation sent to the demo outbox.`);
+  },
+  openInvite(i){S.invite=USERS[i].email;A.go('invite')},
+  resendInvite(i){
+    if(S.viewer!=='recruiter'){toast('Only recruiters can resend invitations.');return}
+    const u=USERS[i];u.expired=false;u.expires='12 Nov 2026';u.invitedBy=S.user.name;
+    sendInvite(u);log(S.user.name,'Accounts',`Resent invitation to ${u.name}. The old link no longer works.`);
+    render();toast(`New invitation sent to ${u.email}. The old link no longer works.`);
+  },
+  expireToggle(i,on){USERS[i].expired=on;render()},
+  pwCheck(i){
+    const r=pwRules($('#inv-pw').value,$('#inv-pw2').value,USERS[i]);
+    $('#pw-rules').innerHTML=rulesHTML(r);
+    $('#inv-btn').disabled=!r.every(x=>x[1]);
+  },
+  setPassword(i){
+    const u=USERS[i];
+    if(u.status!=='Invited'||u.expired)return;
+    const pw=$('#inv-pw').value;
+    if(!pwRules(pw,$('#inv-pw2').value,u).every(x=>x[1]))return;
+    u.pw=pw;u.status='Active';
+    log(u.name,'Accounts','Accepted invitation, set a password. Account is now active.');
+    render();toast('Password set. Your account is active.');
+  },
+  goSignIn(i){
+    const u=USERS[i];
+    if(S.user&&S.user!==u){S.user=null;S.viewer=null}
+    S.login={email:u.email,err:''};S.after='dashboard';A.go('login');
+    setTimeout(()=>$('#lg-pw')?.focus(),0);
+  },
+  openCand(id){S.cand=id;A.go('candidate')},
+  role(id){S.role=id;S.filter='all';render()},
+  filter(f){S.filter=f;render()},
+  dash(id){S.dash=id;render()},
+  piiToggle(){S.piiView=!S.piiView;render()},
+
+  shortlist(id){
+    if(!guard())return;
+    const c=cand(id), o=overall(c);
+    /* Wave 1, W5: shortlisting no longer sends anything; the recruiter previews and confirms proof requests separately */
+    const doIt=reason=>{
+      c.status='shortlisted'; if(reason) c.override=reason;
+      log(RECRUITER,c.name, reason?`Shortlisted with override. Reason: ${reason}`:'Shortlisted.');
+      render();
+      toast(`${c.name} shortlisted. Nothing has been sent yet: preview and send the proof request when you're ready.`);
+    };
+    if(o.k==='bad') modal({title:`Shortlist ${c.name} anyway?`, body:`<p>${esc(o.t)}. You can still shortlist, but you need to write down why.</p>`, input:{label:'Reason for the override',required:true,placeholder:'e.g. Equivalent certification from another country, checked by phone'}, confirm:'Shortlist with override', onOk:doIt});
+    else if(o.k==='warn') modal({title:`Shortlist ${c.name}?`, body:`<p>One criterion needs human review. Confirm you have read the CV and are happy to shortlist.</p>`, input:{label:'Note for the audit log',required:false,placeholder:'e.g. Pipeline work at Mercato Group counts as data engineering'}, confirm:'Shortlist', onOk:doIt});
+    else doIt('');
+  },
+  /* Wave 1, W5: preview every email, then one confirm sends them all (each logged separately) */
+  sendProofs(ids){
+    if(!guard())return;
+    const list=ids.map(cand).filter(c=>c&&c.status==='shortlisted');
+    if(!list.length){toast('Only shortlisted candidates can be asked for proof.');return}
+    const preview=list.map(c=>{const r=roleOf(c);const items=r.verify.filter(t=>t!=='github');
+      return `<div class="panel" style="padding:10px"><b>To ${esc(c.name)}</b> <span class="mono small">${esc(c.email)}</span>
+        <ul class="small" style="margin:6px 0 0 18px">${r.verify.map(t=>`<li><b>${PT[t].label}</b>: ${esc(whyRequested({...c,claims:c.claims},{type:t}))}</li>`).join('')}</ul>
+        <p class="muted small">${items.length} item${items.length===1?'':'s'} to send. Link expires 17 Nov 2026. Files are deleted ${S.settings.retention} days after the role closes.</p></div>`}).join('');
+    modal({title:`Send proof request${list.length===1?'':'s'} to ${list.length} candidate${list.length===1?'':'s'}?`, body:`<p>Check what each candidate will be asked for and why. Nothing is sent until you confirm.</p>${preview}`, confirm:`Send ${list.length} request${list.length===1?'':'s'}`, onOk:()=>{
+      list.forEach(sendProofRequest);
+      render();toast(`${list.length} proof request${list.length===1?'':'s'} sent to the demo outbox.`);
+    }});
+  },
+  /* Wave 1, W1: a re-check request from a candidate reaches the named recruiter and is logged */
+  recheck(cid){
+    const c=cand(cid);
+    log('Candidate',c.name,`Asked for a re-check of the feedback. Routed to ${c.feedback?.by||RECRUITER}; reply due within 5 working days.`);
+    toast(`Re-check request from ${c.name} logged and sent to ${c.feedback?.by||RECRUITER}.`);
+  },
+  /* Wave 1, W3: expired link → candidate asks for a new one → recruiter confirms the reissue */
+  expireLink(cid,on){cand(cid).linkExpired=on;render()},
+  requestLink(cid){
+    const c=cand(cid); if(c.linkRequested)return;
+    c.linkRequested=true;
+    log('Candidate',c.name,'Asked for a new proof upload link (old link expired).');
+    render();toast(`${RECRUITER} has been told. You'll get a new link by email once they confirm it.`);
+  },
+  reissueLink(cid){
+    if(!guard())return;
+    const c=cand(cid),r=roleOf(c);
+    c.linkExpired=false;c.linkRequested=false;
+    log(RECRUITER,c.name,'Confirmed a new proof upload link (expires 19 Nov 2026).');
+    OUTBOX.push({t:stamp(),to:c.email,subject:`${r.title}: your new upload link`,body:`Hi ${first(c.name)},\n\nHere is a new link to your upload page. Everything you already sent is still there.\n\nOpen your secure upload page (expires 19 Nov 2026).\n\n${RECRUITER}\nRecruiter, ${COMPANY}`,link:{k:'upload',c:c.id}});
+    render();toast(`New link sent to ${c.name} (demo outbox).`);
+  },
+  unsuccessful(id){
+    if(!guard())return;
+    const c=cand(id);
+    modal({title:`Mark ${c.name} as unsuccessful?`, body:`<p>A feedback draft is created from the role's recorded unmet criteria. Nothing is sent until you approve it.</p>`, confirm:'Mark unsuccessful', danger:true, onOk:()=>{
+      c.status='unsuccessful'; c.feedback=genFeedback(c);
+      log(RECRUITER,c.name,'Marked unsuccessful. Feedback draft created.');
+      S.fb=c.id; A.go('feedback'); toast('Feedback draft created. Review it before sending.');
+    }});
+  },
+  readyOverride(id){
+    if(!guard())return;
+    const c=cand(id);
+    modal({title:`Mark ${c.name} interview-ready?`, body:`<p>Not every item is verified. You can override, but the reason is saved in the audit log.</p>`, input:{label:'Reason for the override',required:true,placeholder:'e.g. GitHub username changed; new profile checked by phone'}, confirm:'Mark interview-ready', onOk:v=>{
+      c.status='interview-ready'; c.override=v; log(RECRUITER,c.name,`Interview-ready with override. Reason: ${v}`); render(); toast(`${c.name} is interview-ready (override recorded).`);
+    }});
+  },
+  manualEntry(){toast('In the full app, a form opens here so the recruiter can type the claims from the CV.')},
+  runScreening(rid){
+    if(!guard())return;
+    const list=C.filter(c=>c.role===rid&&c.status==='applied');
+    list.forEach(c=>{
+      const p=PRESETS[c.name];
+      if(p){Object.assign(c,{phone:p.phone,city:p.city,claims:p.claims,exp:p.exp,res:p.res,status:'screened'})}
+      else {c.status='needs-entry';c.res=null;c.claims=null;c.failReason='No readable CV text for this person in the prototype, so no claims could be extracted. The candidate has not been screened out.'}
+    });
+    log('System',role(rid).title,`Screened ${list.length} candidate${list.length===1?'':'s'} (flags only).`);
+    render(); toast(`Screened ${list.length} candidate${list.length===1?'':'s'}. Results are flags; nobody was rejected.`);
+  },
+
+  selItem(cid,i){S.v={c:cid,i};render()},
+  verify(cid,i){
+    if(!guard())return;
+    const c=cand(cid),p=c.proofs[i];
+    p.state='verified';p.by=RECRUITER;p.at=stamp();p.note=($('#vnote')?.value||'').trim()||p.note;
+    log(RECRUITER,c.name,`Verified: ${PT[p.type].label}.`);
+    let msg=`${PT[p.type].label} verified for ${c.name}.`;
+    if(c.proofs.every(x=>x.state==='verified')&&c.status==='proof-requested'){c.status='interview-ready';log('System',c.name,'All items verified by a recruiter. Now interview-ready.');msg=`All items verified. ${c.name} is now interview-ready.`}
+    S.v=null;render();toast(msg);
+  },
+  fail(cid,i){
+    if(!guard())return;
+    const note=($('#vnote')?.value||'').trim();
+    if(!note){const e=$('#verr');e.hidden=false;e.textContent='Write what did not match. The note is saved and used in any feedback.';return}
+    const c=cand(cid),p=c.proofs[i];
+    p.state='failed';p.note=note;p.by=RECRUITER;p.at=stamp();
+    log(RECRUITER,c.name,`Failed: ${PT[p.type].label}. Note: ${note}`);
+    render();toast(`Marked as failed. Decide on ${first(c.name)}'s next step from the candidate page.`);
+  },
+  retryGh(cid,i){
+    if(!guard())return;
+    const c=cand(cid),p=c.proofs[i];
+    c.gh='exists';p.state='pending';p.note='';
+    log('System',c.name,'GitHub check retried: profile found, pending human review.');
+    render();toast('GitHub check retried. Profile found, now pending your review.');
+  },
+  simulateDays(){
+    if(!guard())return;
+    let rem=0,nr=0;
+    C.filter(c=>c.status==='proof-requested').forEach(c=>c.proofs.forEach(p=>{
+      if(p.state!=='requested')return;
+      if(!p.reminded){p.reminded=true;rem++;
+        OUTBOX.push({t:stamp(),to:c.email,subject:`Reminder: proof for your ${roleOf(c).title} application`,body:`Hi ${first(c.name)},\n\nThis is a reminder that we're still waiting for: ${PT[p.type].label}.\n\nOpen your secure upload page.\n\n${COMPANY} Recruiting`,link:{k:'upload',c:c.id}});
+        log('System',c.name,`Reminder sent: ${PT[p.type].label}.`)}
+      else {p.state='no-response';nr++;log('System',c.name,`No response: ${PT[p.type].label}. Flagged for the recruiter.`)}
+    }));
+    render();toast(rem?`${S.settings.reminder} days passed: ${rem} reminder${rem===1?'':'s'} sent.`:nr?`Another ${S.settings.reminder} days passed: ${nr} item${nr===1?'':'s'} marked "no response".`:'Nothing is waiting for a candidate.');
+  },
+
+  fbSel(id){S.fb=id;render()},
+  fbInput(el){
+    const c=cand(S.fb);c.feedback.text=el.value;
+    $('#fb-checks').innerHTML=checksHTML(c);
+    $('#fb-approve').disabled=ro()||checkDraft(c.feedback.text,c.feedback.allowed).length>0;
+  },
+  fbReset(){if(!guard())return;const c=cand(S.fb);c.feedback.text=c.feedback.original;render();toast('Draft reset to the generated version.')},
+  fbApprove(){
+    if(!guard())return;
+    const c=cand(S.fb), f=c.feedback;
+    if(checkDraft(f.text,f.allowed).length)return;
+    f.state='sent';f.sentAt=stamp();f.by=RECRUITER;c.status='feedback-sent';
+    log(RECRUITER,c.name,f.text===f.original?'Feedback approved and sent.':'Feedback edited, approved and sent.');
+    OUTBOX.push({t:stamp(),to:c.email,subject:`Your application for ${roleOf(c).title}`,body:f.text,link:{k:'recheck',c:c.id}});
+    const next=C.find(x=>x.status==='unsuccessful'); if(next) S.fb=next.id;
+    render();toast(`Feedback sent to ${c.name} (demo outbox).`);
+  },
+
+  newRole(){
+    if(!guard())return;
+    A.editRole(draftRole().id);
+  },
+  editRole(id){initForm(id);A.go('new-role')},
+  suggest(){
+    if(!guard())return;
+    const btn=$('#suggest-btn');btn.disabled=true;btn.textContent='Reading the job description…';
+    setTimeout(()=>{
+      const keep=S.sugg.filter(s=>s.status==='accepted');
+      S.sugg=[...keep,...suggestFrom(S.form.jd)];S.suggRan=true;render();
+      const b=S.sugg.filter(s=>s.status==='blocked').length;
+      toast(`${S.sugg.filter(s=>s.status==='suggested').length} must-haves suggested${b?`, ${b} sentence${b===1?'':'s'} blocked`:''}. Check each one.`);
+    },700);
+  },
+  sAccept(i){const s=S.sugg[i];s.status='accepted';s.editing=false;const map={'Degree level':'degree','Certification':'certificate','Years of experience':'reference'};if(map[s.type])S.form.verify[map[s.type]]=true;render()},
+  sUndo(i){S.sugg[i].status='suggested';render()},
+  sDelete(i){S.sugg.splice(i,1);render()},
+  sEdit(i){S.sugg[i].editing=true;render();$('#sv-'+i)?.focus()},
+  sSave(i){const s=S.sugg[i];const v=$('#sv-'+i).value.trim();if(!v)return;const p=PROTECTED.find(([re])=>re.test(v));if(p){toast(`Can't save: this refers to ${p[1]}.`);return}s.value=v;s.must=$('#sm-'+i).value==='must';s.editing=false;render()},
+  addManual(){
+    if(!guard())return;
+    const t=$('#m-type').value,v=$('#m-val').value.trim(),must=$('#m-must').value==='must';
+    if(!v){S.form.err='Type a value for the criterion, for example "At least 3 years in payroll".';render();return}
+    const p=PROTECTED.find(([re])=>re.test(v));
+    if(p){S.form.err=`This criterion refers to ${p[1]}, which can't be used in hiring decisions.`;render();return}
+    S.form.err='';S.sugg.push({id:'m'+(S.nextId++),type:t,value:v,source:'Added by hand',status:'accepted',must});render();
+  },
+  saveRole(){
+    if(!guard())return;
+    const f=S.form, r=role(f.id);
+    const acc=S.sugg.filter(s=>s.status==='accepted');
+    if(!f.title.trim()){f.err='Give the role a title.';render();return}
+    if(!acc.some(s=>s.must)){f.err='Add at least one must-have. A role with no must-haves cannot be saved.';render();return}
+    if(S.sugg.some(s=>s.status==='suggested')){f.err='Accept or delete every suggestion before saving.';render();return}
+    Object.assign(r,{title:f.title.trim(),dept:f.dept,location:f.location,closing:f.closing,jd:f.jd,status:'open',
+      criteria:acc.map((s,i)=>({id:'c'+(i+1),type:s.type,value:s.value,short:s.value.length>28?s.value.slice(0,26)+'…':s.value,must:s.must})),
+      verify:Object.keys(f.verify).filter(k=>f.verify[k])});
+    log(RECRUITER,r.title,`Opened role with ${acc.filter(s=>s.must).length} must-haves. Proof needed: ${r.verify.map(v=>PT[v].label.toLowerCase()).join(', ')||'none'}.`);
+    S.role=r.id;S.csvRole=r.id;A.go('roles');toast(`${r.title} saved and opened.`);
+  },
+
+  csvCheck(){
+    S.csvText=$('#csv').value;
+    const lines=S.csvText.trim().split(/\r?\n/);
+    const head=lines.shift().split(',').map(s=>s.trim().toLowerCase());
+    const need=['name','email','cv_file'];
+    const missingCols=need.filter(n=>!head.includes(n));
+    if(missingCols.length){S.csvRows={error:`The header row must contain: name, email, cv_file. Missing: ${missingCols.join(', ')}.`};render();return}
+    const idx=Object.fromEntries(need.map(n=>[n,head.indexOf(n)]));
+    S.csvRows=lines.filter(l=>l.trim()).map((l,i)=>{
+      const cells=l.split(',').map(s=>s.trim());const row={line:i+2,name:cells[idx.name]||'',email:cells[idx.email]||'',file:cells[idx.cv_file]||''};
+      const errs=[];
+      if(!row.name)errs.push('Missing name');
+      if(!row.email)errs.push('Missing email');else if(!/^\S+@\S+\.\S+$/.test(row.email))errs.push('Email is not valid');
+      if(!row.file)errs.push('Missing CV file name');
+      if(row.email&&C.some(c=>c.role===S.csvRole&&c.email===row.email))errs.push('Already applied to this role');
+      row.err=errs.join('; ');return row;
+    });
+    render();
+  },
+  csvImport(){
+    if(!guard())return;
+    const ok=S.csvRows.filter(r=>!r.err);
+    ok.forEach(r=>C.push({id:'n'+(S.nextId++),role:S.csvRole,name:r.name,email:r.email,phone:'+34 600 000 000',city:'Spain',applied:'2026-11-03',status:'applied',claims:null,res:null}));
+    log(RECRUITER,role(S.csvRole).title,`Imported ${ok.length} applicant${ok.length===1?'':'s'} from CSV. ${S.csvRows.length-ok.length} row${S.csvRows.length-ok.length===1?'':'s'} skipped.`);
+    S.csvRows=null;S.role=S.csvRole;S.filter='all';A.go('pipeline');
+    toast(`${ok.length} applicants imported. Run screening to flag them against the must-haves.`);
+  },
+  cvFiles(input){
+    if(!guard())return;
+    const files=[...input.files];if(!files.length)return;
+    files.forEach(f=>{const name=f.name.replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ').replace(/\bcv\b/i,'').trim().replace(/\b\w/g,m=>m.toUpperCase())||'Unnamed applicant';
+      C.push({id:'n'+(S.nextId++),role:S.csvRole,name,email:'(from CV)',phone:'',city:'',applied:'2026-11-03',status:'applied',claims:null,res:null})});
+    log(RECRUITER,role(S.csvRole).title,`Uploaded ${files.length} CV file${files.length===1?'':'s'}.`);
+    S.role=S.csvRole;S.filter='all';A.go('pipeline');toast(`${files.length} CV${files.length===1?'':'s'} added. Files are not read in the prototype.`);
+  },
+
+  openUpload(cid){S.upload=cid;A.go('upload')},
+  openRef(cid){S.ref=cid;A.go('referee')},
+  upload(cid,i,input){
+    const f=input.files[0];if(!f)return;
+    const c=cand(cid),p=c.proofs[i];
+    p.state='pending';p.file=f.name;
+    log('Candidate',c.name,`Uploaded: ${PT[p.type].label} (${f.name}).`);
+    render();toast(`${f.name} received. A recruiter will review it.`);
+  },
+  refGive(cid,i){
+    const c=cand(cid),p=c.proofs[i];
+    const name=$('#rn-'+i).value.trim(),email=$('#re-'+i).value.trim(),job=parseJob($('#rj-'+i).value);
+    const consent=$('#rc-'+i).checked;
+    const e=$('#rerr-'+i);
+    if(!name||!/^\S+@\S+\.\S+$/.test(email)){e.hidden=false;e.textContent='Enter the referee\'s name and a valid work email.';return}
+    if(!consent){e.hidden=false;e.textContent='Tick the box to agree that we contact this referee.';return}
+    p.referee={name,email,job:job.job,employer:job.employer,dates:job.dates};
+    log('Candidate',c.name,`Referee given for Employment reference: ${name}, ${job.employer}.`);
+    OUTBOX.push({t:stamp(),to:email,subject:`Please confirm employment details for ${c.name}`,body:`Hello ${name},\n\n${c.name} has applied for a role at ${COMPANY} and gave your name as a referee, with their consent.\n\nPlease confirm their job title and dates at ${job.employer}. It takes under a minute, and we do not ask for your opinion of the candidate.\n\nOpen the confirmation form.\n\n${COMPANY} Recruiting`,link:{k:'referee',c:c.id}});
+    S.ref=c.id;render();toast(`Thanks. We've emailed ${name} (demo outbox).`);
+  },
+  refAnswer(){
+    const c=cand(S.ref),p=c.proofs.find(x=>x.type==='reference');
+    const v=document.querySelector('input[name="ra"]:checked')?.value;
+    const txt=$('#ra-text').value.trim();
+    const e=$('#ra-err');
+    if(!v){e.hidden=false;e.textContent='Choose one answer.';return}
+    if(v!=='yes'&&!txt){e.hidden=false;e.textContent='Tell us the correct job title or dates.';return}
+    p.answer={v,txt};p.state='pending';
+    log('Referee',c.name,`Employment reference answered by ${p.referee.name}.`);
+    render();toast('Thank you. Your answer has been sent to the recruiter.');
+  },
+  saveSettings(){
+    if(!guard())return;
+    const r=+$('#set-ret').value,m=+$('#set-rem').value;
+    if(!(r>=1&&r<=365)||!(m>=1&&m<=30)){toast('Retention must be 1 to 365 days, and the reminder 1 to 30 days.');return}
+    Object.assign(S.settings,{retention:r,reminder:m,sender:$('#set-sn').value,senderEmail:$('#set-se').value});
+    log(RECRUITER,'Settings',`Retention set to ${r} days. Reminder after ${m} days.`);
+    render();toast('Settings saved.');
+  }
+};
+
+function sendInvite(u){
+  OUTBOX.push({t:stamp(),to:u.email,subject:`You've been invited to the ${COMPANY} hiring app`,
+    body:`Hi ${first(u.name)},\n\n${u.invitedBy} has created a ${UTYPE[u.type]} account for you in the ${COMPANY} hiring app.\n\nOpen the invitation to set your password. The link works once and expires on ${u.expires}.\n\nIf you weren't expecting this, you can ignore this email.\n\n${COMPANY} Recruiting`,
+    link:{k:'invite',c:u.email}});
+}
+function pwRules(pw,pw2,u){
+  const low=pw.toLowerCase();
+  return [
+    ['At least 10 characters', pw.length>=10],
+    ['Contains a letter and a number', /[a-z]/i.test(pw)&&/\d/.test(pw)],
+    ['Does not contain your name or email', !!pw&&!low.includes(first(u.name).toLowerCase())&&!low.includes(u.email.split('@')[0].toLowerCase())],
+    ['Both passwords match', !!pw&&pw===pw2]
+  ];
+}
+function rulesHTML(r){return r.map(([t,ok])=>`<li><span class="dot" style="background:${ok?'var(--ok)':'var(--line-strong)'}"></span><span${ok?'':' class="muted"'}>${t}</span></li>`).join('')}
+
+function draftRole(){
+  let d=ROLES.find(r=>r.status==='draft');
+  if(!d){d={id:'r'+(ROLES.length+1),title:'',dept:'',location:'',closing:'2026-12-15',status:'draft',criteria:[],verify:[],jd:SAMPLE_JD};ROLES.push(d)}
+  return d;
+}
+function initForm(id){
+  const r=role(id);
+  S.form={id,title:r.title,dept:r.dept,location:r.location,closing:r.closing,jd:r.jd||'',verify:{degree:false,certificate:false,reference:false,github:false},err:''};
+  r.verify.forEach(v=>S.form.verify[v]=true);
+  S.sugg=r.criteria.map((k,i)=>({id:'k'+i,type:k.type,value:k.value,source:'Added earlier',status:'accepted',must:k.must}));
+  S.suggRan=S.sugg.length>0;
+}
+
+/* ---------- "AI" suggestion (simulated in the prototype with simple rules) ---------- */
+function suggestFrom(jd){
+  const out=[]; const sents=jd.replace(/\s+/g,' ').trim().split(/(?<=[.!?])\s+/).filter(Boolean);
+  const niceRe=/\b(a plus|nice to have|desirable|preferred|bonus|an advantage)\b/i;
+  const clauseNice=(s,token)=>{const cl=s.split(/,|;|\band\b/).find(x=>x.toLowerCase().includes(token.toLowerCase()));return niceRe.test(cl||'')};
+  const add=(type,value,source,nice)=>out.push({id:'s'+(S.nextId++),type,value,source,status:'suggested',must:!nice});
+  for(const s of sents){
+    const blocks=[];
+    if(/\b(under|over|below|above)\s+\d{2}\b|\byoung\b|\bages?\b|\byears old\b/i.test(s)) blocks.push('it refers to age');
+    if(/\bnative\b[^.]*\bspeakers?\b|\bnationality\b|\bcitizens? only\b/i.test(s)) blocks.push('"native speaker" refers to nationality. Use a language level such as "Spanish C1" instead');
+    if(/\b(male|female|gender|married|single|children)\b/i.test(s)) blocks.push('it refers to gender or family status');
+    if(blocks.length){out.push({id:'s'+(S.nextId++),type:'Blocked',value:s,source:s,status:'blocked',why:'Can\'t be used: '+blocks.join('; ')+'.'});continue}
+    const nice=niceRe.test(s);
+    let m;
+    if((m=s.match(/(\d+)\+?\s*(?:or more\s*)?years?\s+(?:of\s+)?(?:experience|exp)\b\s*(?:in|with)?\s*([^.,;]*)/i))) add('Years of experience',`At least ${m[1]} years${m[2]?' in '+m[2].trim():''}`,s,nice);
+    if((m=s.match(/\b(Bachelor'?s|Master'?s|PhD|BSc|MSc)\b[^.;]*/i))) add('Degree level',m[0].replace(/\s+(is|are)\s+(required|essential|needed)$/i,'').trim(),s,nice);
+    for(const k of ['Excel','SQL','Python','Power BI','Tableau','SAP','Java','Spark','Workday']) if(new RegExp('\\b'+k.replace(' ','\\s')+'\\b').test(s)) add('Required skill',k,s,clauseNice(s,k));
+    if((m=s.match(/\b(ACCA|CIMA|CIPD|CFA|PMP|AWS Certified)\b/))) add('Certification',s.slice(m.index).replace(/\s+(is|are)\s+(required|essential|needed|a plus)\.?$/i,'').replace(/\.$/,''),s,nice);
+    for(const L of ['English','Spanish','Catalan','French','German','Portuguese','Italian']){
+      const lm=s.match(new RegExp('\\b'+L+'\\b(?:\\s*\\((A1|A2|B1|B2|C1|C2)\\))?'));
+      if(lm){const lvl=lm[1]||(/\b(fluent|advanced)\b/i.test(s.split(/\band\b/).find(x=>x.includes(L))||'')?'C1':'');add('Language',lvl?`${L} ${lvl}`:`${L} (level not stated, please set one)`,s,clauseNice(s,L))}
+    }
+  }
+  return out;
+}
+
+/* ---------- Screens ---------- */
+function head(eyebrow,title,sub,actions=''){return `<div class="head"><div>${eyebrow?`<p class="eyebrow">${eyebrow}</p>`:''}<h1>${title}</h1>${sub?`<p class="sub">${sub}</p>`:''}</div>${actions?`<div class="row">${actions}</div>`:''}</div>`}
+const openRoles=()=>ROLES.filter(r=>r.status==='open');
+const inRole=id=>C.filter(c=>c.role===id);
+
+function scrDashboard(){
+  const all=C.filter(c=>roleOf(c).status==='open');
+  const cnt=k=>all.filter(c=>stageOf(c)===k).length;
+  const rows=openRoles().map(r=>{const cs=inRole(r.id);return `<tr class="click" onclick="A.dash('${r.id}')"><td><b>${esc(r.title)}</b><div class="muted small">${esc(r.location)} · closes ${fmtDate(r.closing)}</div></td>${STAGES.map(([k])=>`<td class="num">${cs.filter(c=>stageOf(c)===k).length}</td>`).join('')}<td class="num"><b>${cs.length}</b></td></tr>`}).join('');
+  const r=role(S.dash)||openRoles()[0]; const cs=inRole(r.id); const tot=cs.length;
+  const stack=tot?STAGES.map(([k,,col])=>{const n=cs.filter(c=>stageOf(c)===k).length;return n?`<span style="width:${n/tot*100}%;background:${col}" title="${n}"></span>`:''}).join(''):'';
+  const legend=STAGES.map(([k,t,col])=>`<div><span><span class="sw" style="background:${col}"></span>${t}</span><b class="mono">${cs.filter(c=>stageOf(c)===k).length}</b></div>`).join('');
+  const screened=cs.filter(c=>c.res);
+  let missing;
+  if(tot<5) missing=`<div class="empty">Hidden: this role has ${tot} candidate${tot===1?'':'s'}. Figures for groups under 5 are hidden so no one can be singled out. <span class="tag stretch">Stretch</span></div>`;
+  else {
+    const max=Math.max(1,...r.criteria.map(k=>screened.filter(c=>['missing','review'].includes(c.res[k.id]?.r)).length));
+    missing=`<div class="bars">${r.criteria.map(k=>{const mi=screened.filter(c=>c.res[k.id]?.r==='missing').length,rv=screened.filter(c=>c.res[k.id]?.r==='review').length;
+      return `<div class="bar-row"><span>${esc(k.value)}</span><div class="bar"><span style="width:${mi/max*100}%;background:var(--bad)"></span><span style="width:${rv/max*100}%;background:var(--warn)"></span></div><span class="mono num">${mi}${rv?` +${rv}`:''}</span></div>`}).join('')}</div>
+      <div class="legend" style="grid-template-columns:repeat(auto-fill,minmax(150px,max-content))"><span><span class="sw" style="background:var(--bad)"></span>Missing</span><span><span class="sw" style="background:var(--warn)"></span>Needs human review</span></div>
+      <p class="muted small">Out of ${screened.length} screened candidates. If many people miss the same requirement, check whether it is realistic.</p>`;
+  }
+  const items=cs.flatMap(c=>c.proofs||[]);
+  const responded=items.filter(p=>!['requested','no-response'].includes(p.state)).length;
+  const unsucc=cs.filter(c=>['unsuccessful','feedback-sent'].includes(c.status));
+  const specific=cs.filter(c=>c.status==='feedback-sent'&&c.feedback?.specific).length;
+  return `${head('Overview · all open roles','Hiring dashboard',`Totals for ${COMPANY}. The dashboard never shows individual scores, rankings or personal characteristics.`)}
+  <div class="tiles">
+    <div class="tile"><b>${all.length}</b><span>Applications</span></div>
+    <div class="tile"><b>${cnt('decide')}</b><span>Awaiting your decision</span></div>
+    <div class="tile"><b>${cnt('proof')}</b><span>Waiting on proof</span></div>
+    <div class="tile"><b>${cnt('ready')}</b><span>Interview-ready</span></div>
+  </div>
+  <div class="note" role="note"><b>We do not rank candidates.</b> To see who passed every check for a role (meets all must-haves, and a recruiter verified every proof item), open <a href="#pipeline" onclick="S.role='${r.id}';S.filter='allchecks'">${esc(r.title)}: passed every check</a>. The list is sorted by date applied, not by fit.</div>
+  <section class="panel"><div class="panel-h"><h2>Open roles by stage</h2><span class="muted small">Click a role to see its detail below</span></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Role</th>${STAGES.map(([,t])=>`<th class="num">${t}</th>`).join('')}<th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table></div></section>
+  <div class="row">${openRoles().map(x=>`<button class="filter ${x.id===r.id?'on':''}" onclick="A.dash('${x.id}')">${esc(x.title)} <span class="n">${inRole(x.id).length}</span></button>`).join('')}</div>
+  <div class="grid2">
+    <section class="panel"><div class="panel-h"><h2>Pipeline: ${esc(r.title)}</h2><span class="mono muted">${tot} applications</span></div>
+      ${tot?`<div class="stack" role="img" aria-label="Candidates by stage">${stack}</div><div class="legend">${legend}</div><p class="muted small">The ${STAGES.length} stages add up to ${tot}, the total number of applications.</p>`:`<div class="empty">No applications yet.</div>`}
+    </section>
+    <section class="panel"><div class="panel-h"><h2>Most common missing must-haves</h2></div>${missing}</section>
+  </div>
+  <section class="panel"><div class="panel-h"><h2>Process figures: ${esc(r.title)}</h2><span class="tag stretch">Stretch</span></div>
+    <div class="tiles">
+      <div class="tile"><b>${items.length?Math.round(responded/items.length*100)+'%':'—'}</b><span>Proof items answered (${responded} of ${items.length})</span></div>
+      <div class="tile"><b>${items.length?'3.5':'—'}</b><span>Median days from shortlist to interview-ready (demo value)</span></div>
+      <div class="tile"><b>${unsucc.length}</b><span>Unsuccessful candidates</span></div>
+      <div class="tile"><b>${specific}</b><span>Got specific, job-related feedback</span></div>
+    </div></section>`;
+}
+
+function scrRoles(){
+  const rows=ROLES.map(r=>{const cs=inRole(r.id);
+    return `<tr><td><b>${esc(r.title||'Untitled role')}</b><div class="muted small">${esc(r.dept)}${r.location?' · '+esc(r.location):''}</div></td>
+    <td>${r.status==='open'?chip('ok','Open'):r.status==='draft'?chip('warn','Draft'):chip('','Closed')}</td>
+    <td>${r.criteria.filter(k=>k.must).length||'—'}</td><td class="small">${r.verify.map(v=>PT[v].label).join(', ')||'—'}</td>
+    <td class="mono">${fmtDate(r.closing)}</td><td class="num">${cs.length}</td><td class="num">${cs.filter(c=>c.status==='interview-ready').length}</td>
+    <td><div class="row" style="flex-wrap:nowrap">${r.status==='draft'?`<button class="btn small primary" onclick="A.editRole('${r.id}')"${dis()}>Finish setup</button>`:`<button class="btn small" onclick="A.role('${r.id}');A.go('pipeline')">Candidates</button><button class="btn small" onclick="S.csvRole='${r.id}';S.csvRows=null;A.go('add-applicants')"${dis()}>Add applicants</button>`}</div></td></tr>`}).join('');
+  return `${head('Roles','Roles',`Each role lists its must-haves and which claims need proof after shortlisting.`,`<button class="btn primary" onclick="A.newRole()"${dis()}>Create role</button>`)}
+  <section class="panel"><div class="tbl-wrap"><table><thead><tr><th>Role</th><th>Status</th><th>Must-haves</th><th>Proof needed</th><th>Closes</th><th class="num">Applied</th><th class="num">Ready</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+}
+
+function scrNewRole(){
+  if(!S.form) initForm(draftRole().id);
+  const f=S.form;
+  const sugg=S.sugg.map((s,i)=>{
+    if(s.status==='blocked') return `<div class="sugg blocked"><div style="display:grid;gap:4px"><div class="row">${chip('bad','Blocked')}</div><div class="val">${esc(s.why)}</div><div class="src">From the job description: “${esc(s.source)}”</div></div><div class="row"><button class="btn small" onclick="A.sDelete(${i})">Remove</button></div></div>`;
+    const body=s.editing
+      ? `<div class="row" style="align-items:stretch"><input type="text" id="sv-${i}" value="${esc(s.value)}" style="flex:1 1 220px"><select id="sm-${i}" style="width:auto"><option value="must" ${s.must?'selected':''}>Must-have</option><option value="nice" ${s.must?'':'selected'}>Nice-to-have</option></select></div>`
+      : `<div class="val">${esc(s.value)}</div>`;
+    return `<div class="sugg ${s.status==='accepted'?'accepted':''}"><div style="display:grid;gap:4px;min-width:0">
+      <div class="row">${chip(s.status==='accepted'?'ok':'info',s.type)}${s.must?'<span class="tag">Must-have</span>':'<span class="tag stretch">Nice-to-have</span>'}${s.status==='accepted'?'<span class="small" style="color:var(--ok)">Accepted</span>':''}</div>
+      ${body}<div class="src">${s.source.startsWith('Added')?esc(s.source):'From the job description: “'+esc(s.source)+'”'}</div></div>
+      <div class="row">${s.editing?`<button class="btn small primary" onclick="A.sSave(${i})">Save</button>`:s.status==='accepted'?`<button class="btn small" onclick="A.sUndo(${i})">Undo</button><button class="btn small" onclick="A.sEdit(${i})">Edit</button>`:`<button class="btn small primary" onclick="A.sAccept(${i})">Accept</button><button class="btn small" onclick="A.sEdit(${i})">Edit</button>`}<button class="btn small danger" onclick="A.sDelete(${i})">Delete</button></div></div>`;
+  }).join('');
+  const vlist=[['degree','Degree certificate','Candidate uploads; a recruiter reviews'],['certificate','Certification','Candidate uploads; a recruiter reviews'],['reference','Employment reference','Referee confirms title and dates · stretch'],['github','GitHub profile','Automatic existence check, then recruiter review']];
+  return `${head('Roles › Set up','Set up a role','Paste the job description. AI suggests must-haves from five fixed types, and you accept, edit or delete each one. Nothing is saved until you confirm.')}
+  <section class="panel"><h2>Role details</h2>
+    <div class="form-grid">
+      <label class="f" for="f-title">Title<input type="text" id="f-title" value="${esc(f.title)}" oninput="S.form.title=this.value"></label>
+      <label class="f" for="f-dept">Department<input type="text" id="f-dept" value="${esc(f.dept)}" oninput="S.form.dept=this.value"></label>
+      <label class="f" for="f-loc">Location<input type="text" id="f-loc" value="${esc(f.location)}" oninput="S.form.location=this.value"></label>
+      <label class="f" for="f-close">Closing date<input type="date" id="f-close" value="${esc(f.closing)}" oninput="S.form.closing=this.value"></label>
+    </div></section>
+  <div class="grid-side">
+    <section class="panel"><div class="panel-h"><h2>1. Job description</h2><span class="muted small">Sample text, edit freely</span></div>
+      <label class="f" for="f-jd"><span class="muted" style="font-weight:400">Paste the full advert</span><textarea id="f-jd" rows="11" oninput="S.form.jd=this.value">${esc(f.jd)}</textarea></label>
+      <div class="row"><button class="btn primary" id="suggest-btn" onclick="A.suggest()"${dis()}>${S.suggRan?'Suggest again':'Suggest must-haves'}</button><span class="muted small">Simulated in the prototype with simple rules.</span></div>
+    </section>
+    <section class="panel"><h2>3. Proof needed after shortlisting</h2>
+      <p class="muted small">Candidates are asked for these only after a recruiter shortlists them, one request per type.</p>
+      <div class="items">${vlist.map(([k,t,d])=>`<label class="radio" for="v-${k}"><input type="checkbox" id="v-${k}" ${f.verify[k]?'checked':''} onchange="S.form.verify['${k}']=this.checked"><span><b>${t}</b><br><span class="muted small">${d}</span></span></label>`).join('')}</div>
+    </section>
+  </div>
+  <section class="panel"><div class="panel-h"><h2>2. Must-haves</h2><span class="muted small">${S.sugg.filter(s=>s.status==='accepted').length} accepted · ${S.sugg.filter(s=>s.status==='suggested').length} to check</span></div>
+    ${S.sugg.length?`<div class="items">${sugg}</div>`:`<div class="empty">Press <b>Suggest must-haves</b> to read the job description, or add criteria by hand below.</div>`}
+    <div style="border-top:1px solid var(--line);padding-top:12px;display:grid;gap:8px"><h3>Add a criterion by hand</h3>
+      <div class="row" style="align-items:stretch">
+        <select id="m-type" style="width:auto" aria-label="Criterion type">${TYPES.map(t=>`<option>${t}</option>`).join('')}</select>
+        <input type="text" id="m-val" placeholder="e.g. At least 3 years in payroll" style="flex:1 1 220px" aria-label="Criterion value">
+        <select id="m-must" style="width:auto" aria-label="Must-have or nice-to-have"><option value="must">Must-have</option><option value="nice">Nice-to-have</option></select>
+        <button class="btn" onclick="A.addManual()"${dis()}>Add</button></div></div>
+  </section>
+  ${f.err?`<div class="note bad" role="alert">${esc(f.err)}</div>`:''}
+  <div class="row" style="justify-content:flex-end"><button class="btn" onclick="A.go('roles')">Cancel</button><button class="btn primary" onclick="A.saveRole()"${dis()}>Save and open role</button></div>`;
+}
+
+function scrAdd(){
+  const r=role(S.csvRole);
+  const table=S.csvRows?(S.csvRows.error?`<div class="note bad">${esc(S.csvRows.error)}</div>`:`
+    <div class="tbl-wrap"><table><thead><tr><th>Line</th><th>Name</th><th>Email</th><th>CV file</th><th>Result</th></tr></thead><tbody>
+    ${S.csvRows.map(x=>`<tr><td class="mono">${x.line}</td><td>${esc(x.name)||'<span class="muted">—</span>'}</td><td class="mono">${esc(x.email)||'<span class="muted">—</span>'}</td><td class="mono">${esc(x.file)||'<span class="muted">—</span>'}</td><td>${x.err?chip('bad',x.err,'wrap'):chip('ok','Ready to import')}</td></tr>`).join('')}</tbody></table></div>
+    <div class="row" style="justify-content:space-between"><span class="muted small">Rows with problems are not imported. Fix them in your file and import again.</span>
+    <button class="btn primary" onclick="A.csvImport()" ${S.csvRows.some(x=>!x.err)?'':'disabled'}${dis()}>Import ${S.csvRows.filter(x=>!x.err).length} applicants</button></div>`):'';
+  return `${head('Roles › '+esc(r.title),'Add applicants','Upload CV files, or import a CSV exported from your ATS or a spreadsheet. Applicants arrive as "awaiting screening".')}
+  <div class="row"><label class="f" for="add-role" style="display:flex;gap:8px;align-items:center">Role <select id="add-role" style="width:auto" onchange="S.csvRole=this.value;S.csvRows=null;render()">${openRoles().map(x=>`<option value="${x.id}" ${x.id===S.csvRole?'selected':''}>${esc(x.title)}</option>`).join('')}</select></label></div>
+  <div class="row"><button class="filter ${S.addTab==='csv'?'on':''}" onclick="S.addTab='csv';render()">Import CSV</button><button class="filter ${S.addTab==='cv'?'on':''}" onclick="S.addTab='cv';render()">Upload CV files</button></div>
+  ${S.addTab==='csv'?`<section class="panel"><div class="panel-h"><h2>CSV import</h2><span class="muted small">Columns: name, email, cv_file</span></div>
+    <label class="f" for="csv"><span class="muted" style="font-weight:400">Paste the CSV contents (sample shown, with two problem rows)</span><textarea id="csv" rows="6" class="mono" style="font-family:var(--mono);font-size:12.5px">${esc(S.csvText)}</textarea></label>
+    <div class="row"><button class="btn" onclick="A.csvCheck()">Check file</button></div>${table}</section>`
+  :`<section class="panel"><h2>Upload CV files</h2><div class="drop"><b>Drop PDF or DOCX files here</b><span class="muted small">or</span><label class="btn" for="cvfiles">Choose files<input type="file" id="cvfiles" multiple accept=".pdf,.doc,.docx,.txt" hidden onchange="A.cvFiles(this)"${dis()}></label><span class="muted small">In the prototype, files are not read. Each one becomes an applicant named after the file.</span></div></section>`}`;
+}
+
+function scrPipeline(){
+  const roles=ROLES.filter(r=>r.status!=='draft');
+  if(!role(S.role)||role(S.role).status==='draft')S.role=roles[0].id;
+  const r=role(S.role), cs=inRole(r.id);
+  const byDate=(a,b)=>a.applied.localeCompare(b.applied)||a.name.localeCompare(b.name);
+  const list=cs.filter(c=>S.filter==='all'||(S.filter==='allchecks'?passedAll(c):S.filter==='proofstatus'?!!c.proofs:stageOf(c)===S.filter)).sort(byDate);
+  const waiting=cs.filter(c=>c.status==='applied').length;
+  const shortIds=cs.filter(c=>c.status==='shortlisted').map(c=>c.id);
+  /* Wave 1, W5: one row per candidate who was asked for proof, with each item's state and days since the request */
+  const proofRows=list.filter(c=>c.proofs).map(c=>{const d=daysSince(proofSentOn(c));
+    return `<tr class="click" onclick="A.openCand('${c.id}')"><td><b>${esc(c.name)}</b></td><td><div class="row">${c.proofs.map(p=>`<span class="small">${PT[p.type].label}</span> ${chip(PST[p.state][1],PST[p.state][0])}`).join(' ')}</div></td><td class="num mono">${d??'—'}</td><td class="mono">${fmtDate(c.applied)}</td></tr>`}).join('');
+  const rows=list.map(c=>`<tr class="click" onclick="A.openCand('${c.id}')" tabindex="0" onkeydown="if(event.key==='Enter')A.openCand('${c.id}')"><td><b>${esc(c.name)}</b><div class="muted small mono">${esc(c.email)}</div></td><td>${overallChip(c)}</td><td>${statusChip(c)}</td><td>${proofProgress(c)}</td><td class="mono">${fmtDate(c.applied)}</td></tr>`).join('');
+  return `${head('Candidates',esc(r.title),`${esc(r.location)} · closes ${fmtDate(r.closing)} · must-haves: ${r.criteria.filter(k=>k.must).map(k=>esc(k.short)).join(', ')}`,
+    `${waiting?`<button class="btn primary" onclick="A.runScreening('${r.id}')"${dis()}>Run screening (${waiting})</button>`:''}${shortIds.length?`<button class="btn primary" onclick="A.sendProofs(${esc(JSON.stringify(shortIds))})"${dis()}>Send proof requests (${shortIds.length})</button>`:''}<button class="btn" onclick="S.csvRole='${r.id}';S.csvRows=null;A.go('add-applicants')"${dis()}>Add applicants</button>`)}
+  <div class="row">${roles.map(x=>`<button class="filter ${x.id===r.id?'on':''}" onclick="A.role('${x.id}')">${esc(x.title)} <span class="n">${inRole(x.id).length}</span></button>`).join('')}</div>
+  <section class="panel">
+    <div class="row"><button class="filter ${S.filter==='all'?'on':''}" onclick="A.filter('all')">All <span class="n">${cs.length}</span></button>${STAGES.map(([k,t])=>`<button class="filter ${S.filter===k?'on':''}" onclick="A.filter('${k}')">${t} <span class="n">${cs.filter(c=>stageOf(c)===k).length}</span></button>`).join('')}
+      <button class="filter ${S.filter==='allchecks'?'on':''}" onclick="A.filter('allchecks')">Meets all must-haves + proof verified <span class="n">${cs.filter(passedAll).length}</span></button>
+      <button class="filter ${S.filter==='proofstatus'?'on':''}" onclick="A.filter('proofstatus')">Proof status <span class="n">${cs.filter(c=>c.proofs).length}</span></button></div>
+    <div class="note" role="note"><b>We do not rank candidates.</b> ${S.filter==='allchecks'?'These candidates meet every must-have and a recruiter verified every proof item. Override cases are not included.':`To see who passed every check, use <button class="linkish" onclick="A.filter('allchecks')">Meets all must-haves + proof verified</button>.`} Sorted by date applied, never by fit.</div>
+    ${!list.length?`<div class="empty">No candidates here. ${cs.length?'Try another filter.':'Add applicants to get started.'}</div>`
+     :S.filter==='proofstatus'?`<div class="tbl-wrap"><table><thead><tr><th>Candidate</th><th>Items</th><th class="num">Days since request</th><th>Applied</th></tr></thead><tbody>${proofRows}</tbody></table></div>`
+     :`<div class="tbl-wrap"><table><thead><tr><th>Candidate</th><th>Screening result</th><th>Status</th><th>Proof</th><th>Applied</th></tr></thead><tbody>${rows}</tbody></table></div>`}
+  </section>`;
+}
+
+function redacted(c){
+  let t=esc(cvText(c));
+  [[c.name,'NAME'],[c.email,'EMAIL'],[c.phone,'PHONE'],[c.city,'CITY']].forEach(([v,l])=>{if(v)t=t.split(esc(v)).join(`<mark class="pii">[${l}]</mark>`)});
+  return t;
+}
+function cvText(c){
+  const k=c.claims;
+  return `${c.name}\n${c.email} · ${c.phone} · ${c.city}${k.github&&k.github!=='—'?'\n'+k.github:''}\n\n${k.profile?'PROFILE\n'+k.profile+'\n\n':''}EXPERIENCE\n${k.jobs.join('\n')}\n\nEDUCATION\n${k.degree}\n\n${k.certs&&k.certs!=='—'?'CERTIFICATIONS\n'+k.certs+'\n\n':''}SKILLS\n${k.skills}\n\nLANGUAGES\n${k.languages}`;
+}
+function scrCandidate(){
+  const c=cand(S.cand)||C[0], r=roleOf(c);
+  let actions='';
+  if(c.status==='screened') actions=`<button class="btn primary" onclick="A.shortlist('${c.id}')"${dis()}>Shortlist</button><button class="btn danger" onclick="A.unsuccessful('${c.id}')"${dis()}>Mark unsuccessful</button>`;
+  else if(c.status==='needs-entry') actions=`<button class="btn primary" onclick="A.manualEntry()"${dis()}>Enter claims by hand</button><button class="btn danger" onclick="A.unsuccessful('${c.id}')"${dis()}>Mark unsuccessful</button>`;
+  else if(c.status==='shortlisted') actions=`<button class="btn primary" onclick="A.sendProofs(['${c.id}'])"${dis()}>Preview and send proof request</button><button class="btn danger" onclick="A.unsuccessful('${c.id}')"${dis()}>Mark unsuccessful</button>`;
+  else if(c.status==='proof-requested') actions=`<button class="btn" onclick="A.go('verification')">Open verification queue</button><button class="btn" onclick="A.readyOverride('${c.id}')"${dis()}>Mark interview-ready (override)</button><button class="btn danger" onclick="A.unsuccessful('${c.id}')"${dis()}>Mark unsuccessful</button>`;
+  else if(c.status==='interview-ready') actions=`<button class="btn danger" onclick="A.unsuccessful('${c.id}')"${dis()}>Mark unsuccessful</button>`;
+  else if(c.status==='unsuccessful'||c.status==='feedback-sent') actions=`<button class="btn primary" onclick="S.fb='${c.id}';A.go('feedback')">${c.status==='unsuccessful'?'Review feedback draft':'View sent feedback'}</button>`;
+  else if(c.status==='applied') actions=`<button class="btn primary" onclick="A.runScreening('${c.role}')"${dis()}>Run screening</button>`;
+  const hist=AUDIT.filter(a=>a.subject===c.name).sort((a,b)=>b.t.localeCompare(a.t));
+  const o=overall(c);
+  const resRows=c.res?r.criteria.map(k=>{const x=c.res[k.id];const [t,kk]=RES[x.r];return `<tr><td><b>${esc(k.value)}</b><div class="muted small">${esc(k.type)}</div></td><td>${chip(kk,t)}</td><td>${esc(x.why)}<div class="quote">CV: “${esc(x.q)}”</div></td></tr>`}).join(''):'';
+  const proofs=c.proofs?c.proofs.map((p,i)=>`<button class="item" onclick="A.selItem('${c.id}',${i});A.go('verification')"><span class="t"><b>${PT[p.type].label}</b><br><span class="muted small">${esc(p.file||p.note||(p.referee?'Referee: '+p.referee.name:''))}</span></span>${chip(PST[p.state][1],PST[p.state][0])}</button>`).join(''):'';
+  return `${head(`<a href="#pipeline" onclick="S.role='${r.id}'">${esc(r.title)}</a> › Candidate`,esc(c.name),`${esc(c.email)} · applied ${fmtDate(c.applied)}`,actions)}
+  <div class="row">${statusChip(c)}${o?chip(o.k,o.t):''}${c.override?chip('warn','Override: '+c.override,'wrap'):''}</div>
+  ${c.status==='needs-entry'?`<div class="note warn">${esc(c.failReason)}</div>`:''}
+  ${c.status==='shortlisted'?`<div class="note">Shortlisted. No proof request has been sent yet. Preview it and send it when you're ready, or send several at once from the role's candidate list.</div>`:''}
+  ${c.linkRequested?`<div class="note warn" role="status">${esc(first(c.name))}'s upload link expired and they asked for a new one. Nothing they uploaded is lost. <button class="btn small primary" onclick="A.reissueLink('${c.id}')"${dis()}>Send a new link</button></div>`:''}
+  ${c.status==='applied'?`<div class="empty">Not screened yet. Run screening to extract claims and flag them against the must-haves.</div>`:''}
+  ${c.res?`<section class="panel"><div class="panel-h"><h2>Screening against must-haves</h2><span class="muted small">Flags only. You decide.</span></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Must-have</th><th>Result</th><th>Reason and CV text it relied on</th></tr></thead><tbody>${resRows}</tbody></table></div>
+    <p class="small"><span class="muted">Experience worked out from job dates:</span> <span class="mono">${esc(c.exp)}</span></p></section>`:''}
+  <div class="grid2">
+    ${c.claims?`<section class="panel"><div class="panel-h"><h2>Claims found in the CV</h2><button class="btn small" onclick="A.manualEntry()"${dis()}>Correct claims</button></div>
+      <dl class="kv"><dt>Degree</dt><dd>${esc(c.claims.degree)}</dd><dt>Jobs</dt><dd>${c.claims.jobs.map(esc).join('<br>')}</dd><dt>Certifications</dt><dd>${esc(c.claims.certs)}</dd><dt>Skills</dt><dd>${esc(c.claims.skills)}</dd><dt>Languages</dt><dd>${esc(c.claims.languages)}</dd><dt>GitHub</dt><dd class="mono">${esc(c.claims.github)}</dd></dl></section>
+    <section class="panel"><div class="panel-h"><h2>${S.piiView?'Text sent to the AI':'CV text'}</h2><button class="btn small" onclick="A.piiToggle()">${S.piiView?'Show original CV':'Show what the AI received'}</button></div>
+      ${S.piiView?'<p class="muted small">Name, email, phone and city are removed before any AI call.</p>':''}
+      <pre class="cv">${S.piiView?redacted(c):esc(cvText(c))}</pre></section>`:''}
+  </div>
+  ${c.proofs?`<section class="panel"><div class="panel-h"><h2>Proof of claims</h2><span class="muted small">Requested after shortlisting</span></div><div class="items">${proofs}</div></section>`:''}
+  <section class="panel"><h2>History</h2>${hist.length?`<div class="tbl-wrap"><table><tbody>${hist.map(a=>`<tr><td class="mono" style="white-space:nowrap">${a.t}</td><td>${esc(a.user)}</td><td>${esc(a.action)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted">No entries yet.</p>'}</section>`;
+}
+
+function evidence(c,p){
+  if(p.type==='degree'||p.type==='certificate'){
+    if(p.state==='requested'||p.state==='no-response') return `<div class="empty">Nothing uploaded yet.</div>`;
+    const parts=(p.type==='degree'?c.claims.degree:c.claims.certs).split(', ');
+    return `<div class="doc"><small>SYNTHETIC SAMPLE DOCUMENT</small><div>${esc(parts.length>2?parts.slice(2).join(', '):'Awarding body')}</div><div class="small" style="font-style:italic">This is to certify that</div><div class="big">${esc(c.name)}</div><div class="small" style="font-style:italic">has been awarded</div><div class="big" style="font-size:16px">${esc(parts[0])}</div>${parts[1]?`<div>${esc(parts[1])}</div>`:''}</div>
+      <p class="muted small mono">${esc(p.file||'')} · preview is a sample in the prototype</p>`;
+  }
+  if(p.type==='reference'){
+    if(!p.referee) return `<div class="empty">The candidate hasn't named a referee yet.</div>`;
+    const ans=p.answer?{yes:'Yes, these details are correct',no:'No, these details are not correct',correction:'Partly. Correction given'}[p.answer.v]:null;
+    return `<dl class="kv"><dt>Referee</dt><dd>${esc(p.referee.name)}<br><span class="mono small">${esc(p.referee.email)}</span></dd><dt>Asked to confirm</dt><dd>${esc(p.referee.job)}, ${esc(p.referee.employer)}, ${esc(p.referee.dates)}</dd><dt>Answer</dt><dd>${ans?`<b>${ans}</b>${p.answer.txt?`<div class="quote">“${esc(p.answer.txt)}”</div>`:''}`:'<span class="muted">Waiting for the referee</span>'}</dd></dl>
+      ${!p.answer&&!ro()?`<button class="btn small" onclick="A.openRef('${c.id}')">Open referee form (demo)</button>`:''}`;
+  }
+  if(p.type==='github'){
+    const map={pending:['Profile found','ok'],verified:['Profile found','ok'],failed:['Not found','bad'],unavailable:['Check unavailable','warn'],requested:['Not checked','']};
+    const [t,k]=map[p.state]||['—',''];
+    return `<dl class="kv"><dt>Profile</dt><dd class="mono">${esc(c.claims.github)}</dd><dt>Automatic check</dt><dd>${chip(k,t)}</dd>${p.state==='pending'||p.state==='verified'?`<dt>Public facts</dt><dd>23 public repositories · account created 2017 · recent activity in Python and SQL <span class="muted small">(fake API)</span></dd>`:''}${p.note?`<dt>Note</dt><dd>${esc(p.note)}</dd>`:''}</dl>
+      ${p.state==='pending'?'<p class="muted small">The check only shows the profile exists. Look at it and decide whether it supports the CV.</p>':''}`;
+  }
+}
+function scrVerification(){
+  const all=C.filter(c=>c.proofs&&['proof-requested','interview-ready'].includes(c.status)).flatMap(c=>c.proofs.map((p,i)=>({c,p,i})));
+  const groups=[['Needs your review',x=>x.p.state==='pending'],['Needs attention',x=>['failed','unavailable','no-response'].includes(x.p.state)&&x.c.status==='proof-requested'],['Waiting for candidate or referee',x=>x.p.state==='requested'],['Verified',x=>x.p.state==='verified']];
+  if(!S.v||!cand(S.v.c)?.proofs?.[S.v.i]){const f=all.find(x=>x.p.state==='pending')||all.find(groups[1][1])||all[0];S.v=f?{c:f.c.id,i:f.i}:null}
+  const list=groups.map(([t,fn])=>{const xs=all.filter(fn);if(!xs.length)return '';return `<div class="group-h"><span>${t}</span><span class="mono">${xs.length}</span></div>${xs.map(x=>`<button class="item ${S.v&&S.v.c===x.c.id&&S.v.i===x.i?'on':''}" onclick="A.selItem('${x.c.id}',${x.i})"><span class="t"><b>${esc(x.c.name)}</b><br><span class="muted small">${PT[x.p.type].label} · ${esc(roleOf(x.c).title)}</span></span>${chip(PST[x.p.state][1],PST[x.p.state][0])}</button>`).join('')}`}).join('');
+  let panel='<div class="empty">Nothing to review.</div>';
+  if(S.v){
+    const c=cand(S.v.c),p=c.proofs[S.v.i];
+    let decide='';
+    if(p.state==='pending') decide=`<label class="f" for="vnote">Note <span class="muted" style="font-weight:400">(required if it fails)</span><textarea id="vnote" rows="2" placeholder="e.g. Classification on certificate matches the CV"${ro()?' readonly':''}></textarea></label><div class="err" id="verr" hidden></div>
+      <div class="row"><button class="btn primary" onclick="A.verify('${c.id}',${S.v.i})"${dis()}>Mark verified</button><button class="btn danger" onclick="A.fail('${c.id}',${S.v.i})"${dis()}>Mark failed</button></div>`;
+    else if(p.state==='unavailable') decide=`<div class="note warn">GitHub couldn't be reached (rate limit). This is never counted as a failure.</div><div class="row"><button class="btn primary" onclick="A.retryGh('${c.id}',${S.v.i})"${dis()}>Retry check</button></div>`;
+    else if(['failed','no-response'].includes(p.state)) decide=`<div class="note bad">${p.state==='failed'?'This item failed':'The candidate did not respond'}. ${esc(p.note||'')} Decide the next step on the candidate page: override to interview-ready with a reason, or mark unsuccessful.</div><div class="row"><button class="btn" onclick="A.openCand('${c.id}')">Open candidate</button></div>`;
+    else if(p.state==='verified') decide=`<div class="note">Verified by ${esc(p.by||RECRUITER)} on ${esc(p.at||'')}.</div>`;
+    else decide=`<p class="muted">Waiting for ${p.type==='reference'&&p.referee?'the referee':'the candidate'}.${p.reminded?' A reminder was sent.':''}</p><div class="row"><button class="btn small" onclick="A.${p.type==='reference'&&p.referee?'openRef':'openUpload'}('${c.id}')">Open ${p.type==='reference'&&p.referee?'referee form':'candidate upload page'} (demo)</button></div>`;
+    panel=`<div class="panel-h"><div><p class="eyebrow">${esc(roleOf(c).title)}</p><h2>${PT[p.type].label}: ${esc(c.name)}</h2></div>${chip(PST[p.state][1],PST[p.state][0])}</div>
+      <dl class="kv"><dt>Claim on the CV</dt><dd>${esc(claimFor(c,p))}</dd><dt>Role requires</dt><dd>${esc(requirementFor(c,p))}</dd></dl>
+      ${evidence(c,p)}<div style="border-top:1px solid var(--line);padding-top:12px;display:grid;gap:10px">${decide}</div>`;
+  }
+  return `${head('Verification','Verification queue','Every item needs a recruiter to mark it verified. When all of a candidate\'s items are verified, they become interview-ready.',`<button class="btn" onclick="A.simulateDays()"${dis()} title="Demo control">Simulate ${S.settings.reminder} days passing</button>`)}
+  <div class="grid-list"><section class="panel"><div class="items">${list||'<div class="empty">No proof requests yet. Shortlist a candidate to create them.</div>'}</div></section><section class="panel">${panel}</section></div>`;
+}
+
+function checksHTML(c){
+  const f=c.feedback, issues=checkDraft(f.text,f.allowed);
+  const ok=t=>`<li><span class="dot" style="background:var(--ok)"></span><span>${t}</span></li>`;
+  const bad=t=>`<li><span class="dot" style="background:var(--bad)"></span><span>${esc(t)}</span></li>`;
+  return `<ul class="checks">${issues.length?issues.map(bad).join(''):ok('No protected characteristics mentioned')+ok('No reference to other candidates, ranking or scores')+ok(f.allowed.length?'Every reason matches the screening record':'No reasons given (neutral message)')}</ul>
+   ${issues.length?'<p class="err">Sending is blocked until these are fixed.</p>':''}`;
+}
+function scrFeedback(){
+  const list=C.filter(c=>['unsuccessful','feedback-sent'].includes(c.status)).sort((a,b)=>(a.status==='unsuccessful'?0:1)-(b.status==='unsuccessful'?0:1));
+  if(!list.find(c=>c.id===S.fb))S.fb=list[0]?.id;
+  const c=cand(S.fb);
+  const items=list.map(x=>`<button class="item ${x.id===S.fb?'on':''}" onclick="A.fbSel('${x.id}')"><span class="t"><b>${esc(x.name)}</b><br><span class="muted small">${esc(roleOf(x).title)}</span></span>${x.status==='unsuccessful'?chip('warn','Draft'):chip('ok','Sent')}</button>`).join('');
+  let panel='<div class="empty">No unsuccessful candidates.</div>';
+  if(c){
+    const f=c.feedback, sent=f.state==='sent';
+    panel=`<div class="panel-h"><div><p class="eyebrow">${esc(roleOf(c).title)}</p><h2>Feedback for ${esc(c.name)}</h2></div>${sent?chip('ok','Sent '+(f.sentAt||'')):chip('warn','Draft, not sent')}</div>
+      <dl class="kv"><dt>Based on</dt><dd>${f.allowed.length?f.allowed.map(esc).join('<br>'):'<span class="muted">No recorded unmet criteria, so a neutral message is used. No reasons are invented.</span>'}</dd><dt>To</dt><dd class="mono">${esc(c.email)}</dd></dl>
+      <label class="f" for="fb-text">${sent?'Approved version (stored)':'Message'}<textarea id="fb-text" rows="16" oninput="A.fbInput(this)" ${sent||ro()?'readonly':''}>${esc(f.text)}</textarea></label>
+      ${sent?`<p class="muted small">Approved and sent by ${esc(f.by)}.</p>`:`<div style="display:grid;gap:8px"><h3>Safety check</h3><div id="fb-checks">${checksHTML(c)}</div><p class="muted small">Try typing "other candidates" or a sentence about age to see the block.</p></div>
+      <div class="row" style="justify-content:flex-end"><button class="btn" onclick="A.fbReset()"${dis()}>Reset draft</button><button class="btn primary" id="fb-approve" onclick="A.fbApprove()" ${ro()||checkDraft(f.text,f.allowed).length?'disabled':''}>Approve and send</button></div>`}`;
+  }
+  return `${head('Feedback','Feedback to unsuccessful candidates','Drafts cite only the job-related criteria recorded as unmet or unverified. Nothing is sent until a recruiter approves it.')}
+  <div class="grid-list"><section class="panel"><div class="items">${items||'<div class="empty">No drafts.</div>'}</div></section><section class="panel">${panel}</section></div>`;
+}
+
+function scrAudit(){
+  const rows=[...AUDIT].sort((a,b)=>b.t.localeCompare(a.t)).map(a=>`<tr><td class="mono" style="white-space:nowrap">${a.t}</td><td style="white-space:nowrap">${esc(a.user)}</td><td>${esc(a.subject)}</td><td>${esc(a.action)}</td></tr>`).join('');
+  return `${head('Privacy and audit','Audit log','Every status change, with who did it and when. Entries cannot be edited or deleted. After the retention period, only candidate IDs, actions, times and users are kept.')}
+  <section class="panel"><div class="tbl-wrap"><table><thead><tr><th>Time</th><th>By</th><th>Candidate or role</th><th>Action</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+}
+
+function scrSettings(){
+  const s=S.settings;
+  return `${head('Company','Settings',`Settings for ${COMPANY}.`)}
+  <div class="grid2">
+    <section class="panel"><h2>Privacy and reminders</h2>
+      <label class="f" for="set-ret">Delete candidate data this many days after a role closes<input type="number" id="set-ret" min="1" max="365" value="${s.retention}"${ro()?' readonly':''}></label>
+      <p class="muted small">CVs, uploaded documents and extracted personal data are deleted. The audit log keeps only candidate IDs, actions, times and users.</p>
+      <label class="f" for="set-rem">Send one reminder after this many days <span class="tag stretch" style="justify-self:start">Stretch</span><input type="number" id="set-rem" min="1" max="30" value="${s.reminder}"${ro()?' readonly':''}></label>
+      <p class="muted small">After a second wait of the same length, the item is marked "no response" and flagged for the recruiter.</p></section>
+    <section class="panel"><h2>Emails</h2>
+      <label class="f" for="set-sn">Sender name<input type="text" id="set-sn" value="${esc(s.sender)}"${ro()?' readonly':''}></label>
+      <label class="f" for="set-se">Sender email<input type="email" id="set-se" value="${esc(s.senderEmail)}"${ro()?' readonly':''}></label>
+      <div class="note">In the demo and tests, every email goes to the demo outbox, never to real addresses.</div></section>
+  </div>
+  <section class="panel"><div class="panel-h"><h2>User accounts</h2>${S.viewer==='recruiter'?`<button class="btn primary" onclick="S.acc=null;A.go('new-account')">Create account</button>`:`<span class="muted small">Only recruiters can create accounts</span>`}</div>
+    <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Work email</th><th>Type</th><th>Status</th><th>Added</th><th></th></tr></thead><tbody>
+    ${USERS.map((u,i)=>`<tr><td><b>${esc(u.name)}</b>${u===S.user?' <span class="muted small">(you)</span>':''}</td><td class="mono">${esc(u.email)}</td><td>${chip(u.type==='recruiter'?'accent':'',UTYPE[u.type])}</td>
+      <td>${u.status==='Active'?chip('ok','Active'):u.expired?chip('bad','Invitation expired'):chip('warn','Invited, password not set')}${u.status==='Invited'?`<div class="muted small">${u.expired?'Link expired':'Link expires '+esc(u.expires)}</div>`:''}</td>
+      <td class="mono">${fmtDate(u.added)}</td><td>${u.status==='Invited'&&S.viewer==='recruiter'?`<button class="btn small" onclick="A.resendInvite(${i})">Resend invitation</button>`:''}</td></tr>`).join('')}</tbody></table></div>
+    <p class="muted small">Recruiters can do everything. HR leads see the dashboard and audit log, and are read-only on candidates. Candidates and referees never have accounts; they use secure email links.</p></section>
+  <div class="row" style="justify-content:flex-end"><button class="btn primary" onclick="A.saveSettings()"${dis()}>Save settings</button></div>`;
+}
+
+function scrNewAccount(){
+  if(S.viewer!=='recruiter') return `${head('Settings › User accounts','Create account','')}
+    <section class="panel" style="max-width:560px"><h2>Recruiters only</h2><p class="muted">Only recruiters can create accounts. You are signed in as ${esc(S.user.name)} (${UTYPE[S.user.type]}). Ask a recruiter at ${COMPANY} if someone needs access.</p><div><a class="btn" href="#company-settings">Back to settings</a></div></section>`;
+  if(!S.acc) S.acc={name:'',email:'',type:'',err:''};
+  const a=S.acc;
+  const types=[['recruiter','Recruiter','Create roles, screen and shortlist candidates, verify proof, approve feedback, manage settings and accounts.'],
+               ['hrlead','HR lead','See the dashboard and audit log. Read-only on candidates. Cannot create accounts.']];
+  return `${head('Settings › User accounts','Create account',`Add a colleague from ${COMPANY}. They get an email invitation to set their own password.`)}
+  <section class="panel" style="max-width:640px">
+    <div class="form-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+      <label class="f" for="acc-name">Full name<input type="text" id="acc-name" autocomplete="off" value="${esc(a.name)}" oninput="A.accInput('name',this.value)" placeholder="e.g. Pablo Herrera"></label>
+      <label class="f" for="acc-email">Work email<input type="email" id="acc-email" autocomplete="off" value="${esc(a.email)}" oninput="A.accInput('email',this.value)" placeholder="name@${DOMAIN}"></label>
+    </div>
+    <div style="display:grid;gap:8px"><h3>Account type</h3>
+      ${types.map(([k,t,d])=>`<label class="radio" for="acc-${k}"><input type="radio" name="acc-type" id="acc-${k}" value="${k}" ${a.type===k?'checked':''} onchange="A.accInput('type','${k}')"><span><b>${t}</b><br><span class="muted small">${d}</span></span></label>`).join('')}</div>
+    <div class="note">No password is set here. The person receives an invitation link, valid for 7 days, and chooses their own password.</div>
+    ${a.err?`<div class="note bad" role="alert">${esc(a.err)}</div>`:''}
+    <div class="row" style="justify-content:flex-end"><a class="btn" href="#company-settings">Cancel</a><button class="btn primary" onclick="A.createAccount()">Create account and send invitation</button></div>
+  </section>`;
+}
+
+function scrInvite(){
+  const invited=USERS.map((u,i)=>({u,i})).filter(x=>x.u.invitedBy);
+  const bar=(sel)=>`<div class="ext-bar"><span>Invitation page · opened from an email link, no login</span><span class="row">
+    ${invited.length?`<label for="inv-sel" class="small">Show as</label><select id="inv-sel" onchange="S.invite=this.value;render()">${invited.map(x=>`<option value="${esc(x.u.email)}" ${x.u.email===sel?'selected':''}>${esc(x.u.name)}</option>`).join('')}</select>`:''}
+    <a class="btn small" href="#outbox">Back to the app</a></span></div>`;
+  if(!invited.length) return `<div class="outside">${bar(null)}<div class="empty">No invitations yet. Sign in as a recruiter, go to <b>Settings → Create account</b>, then open the invitation from the demo outbox.</div></div>`;
+  let x=invited.find(x=>x.u.email===S.invite)||invited[invited.length-1];
+  const {u,i}=x;
+  let body;
+  if(u.status==='Active') body=`<div class="note">Your password is set and your account is active.</div><div><button class="btn primary" onclick="A.goSignIn(${i})">Go to sign in</button></div>`;
+  else if(u.expired) body=`<div class="note bad">This invitation link has expired. Ask a recruiter at ${COMPANY} to send a new one from Settings.</div>`;
+  else body=`<form onsubmit="event.preventDefault();A.setPassword(${i})" style="display:grid;gap:12px" novalidate>
+      <input type="text" autocomplete="username" value="${esc(u.email)}" hidden readonly>
+      <label class="f" for="inv-pw">New password<input type="password" id="inv-pw" autocomplete="new-password" oninput="A.pwCheck(${i})"></label>
+      <label class="f" for="inv-pw2">Type it again<input type="password" id="inv-pw2" autocomplete="new-password" oninput="A.pwCheck(${i})"></label>
+      <ul class="checks" id="pw-rules">${rulesHTML(pwRules('','',u))}</ul>
+      <button class="btn primary" id="inv-btn" type="submit" disabled style="justify-content:center;padding-block:9px">Set password and activate account</button></form>`;
+  return `<div class="outside">${bar(u.email)}
+    <div class="ext-head"><span class="co">${COMPANY}</span><h1>${u.status==='Active'?'You\'re all set':'Set your password'}</h1><p class="sub">${esc(u.invitedBy)} invited you to the ${COMPANY} hiring app.</p></div>
+    <section class="panel" style="max-width:520px">
+      <dl class="kv"><dt>Name</dt><dd>${esc(u.name)}</dd><dt>Work email</dt><dd class="mono">${esc(u.email)}</dd><dt>Account type</dt><dd>${UTYPE[u.type]}<div class="muted small">${u.type==='recruiter'?'Can manage roles, candidates, verification, feedback and accounts.':'Can see the dashboard and audit log. Read-only on candidates.'}</div></dd>${u.status==='Invited'?`<dt>Link expires</dt><dd>${u.expired?'<span style="color:var(--bad)">Expired</span>':esc(u.expires)}</dd>`:''}</dl>
+      <div style="border-top:1px solid var(--line);padding-top:14px;display:grid;gap:12px">${body}</div>
+    </section>
+    ${u.status==='Invited'?`<label class="radio small" for="inv-exp" style="max-width:520px;border-style:dashed"><input type="checkbox" id="inv-exp" ${u.expired?'checked':''} onchange="A.expireToggle(${i},this.checked)"><span><b>Demo control:</b> show this link as expired (as if 7 days had passed)</span></label>`:''}
+    <p class="muted small">Clicking this link proves you can read email at this address. The link works once. Prototype: passwords are kept only in this page and disappear on reload.</p></div>`;
+}
+
+function scrLogin(){
+  const l=S.login;
+  const demo=USERS.filter(u=>u.status==='Active'&&['laura.gomez@'+DOMAIN,'carmen.soler@'+DOMAIN].includes(u.email));
+  return `<div class="login-wrap"><div class="login">
+    <div><div class="brand" style="padding:0">Pre-Interview Pipeline</div><div class="muted small">${COMPANY}</div></div>
+    <div><h1>Sign in</h1><p class="sub">For recruiters and HR staff. Candidates and referees don't sign in; they use the secure link in their email.</p></div>
+    <form onsubmit="event.preventDefault();A.login()" style="display:grid;gap:12px" novalidate>
+      <label class="f" for="lg-email">Work email<input type="email" id="lg-email" autocomplete="username" value="${esc(l.email)}" placeholder="name@${DOMAIN}"></label>
+      <label class="f" for="lg-pw"><span class="row" style="justify-content:space-between">Password<button type="button" class="linkish" onclick="A.forgot()">Forgot password?</button></span><input type="password" id="lg-pw" autocomplete="current-password"></label>
+      ${l.err?`<div class="note bad" role="alert">${esc(l.err)}</div>`:''}
+      <button class="btn primary" type="submit" style="justify-content:center;padding-block:9px">Sign in</button>
+    </form>
+    <div class="demo-acc"><p class="eyebrow" style="margin:0">Demo accounts · password ${DEMO_PW}</p>
+      ${demo.map(u=>`<button class="item" onclick="A.demoFill('${u.email}')"><span class="t"><b>${esc(u.name)}</b><br><span class="muted small mono">${esc(u.email)}</span></span>${chip(u.type==='recruiter'?'accent':'',UTYPE[u.type])}</button>`).join('')}</div>
+  </div><p class="muted small" style="text-align:center">Prototype. Passwords are not stored or sent anywhere.</p></div>`;
+}
+
+function scrOutbox(){
+  const mails=[...OUTBOX].sort((a,b)=>b.t.localeCompare(a.t)).map(m=>`<article class="email"><div class="meta"><span>To <b class="mono">${esc(m.to)}</b></span><span class="mono">${m.t}</span></div><h3>${esc(m.subject)}</h3><pre>${esc(m.body)}</pre>${m.link?`<div><button class="btn small primary" onclick="${m.link.k==='invite'?`A.openInvite(${USERS.findIndex(u=>u.email===m.link.c)})`:`A.${{upload:'openUpload',referee:'openRef',recheck:'recheck'}[m.link.k]}('${m.link.c}')`}">${{upload:'Open upload page',referee:'Open confirmation form',invite:'Open invitation',recheck:'Reply: ask for a re-check (demo)'}[m.link.k]}</button></div>`:''}</article>`).join('');
+  return `${head('Outside the app','Demo outbox','Every email the app sends, caught here instead of being delivered. Use the buttons to open the page a candidate or referee would see.')}<div style="display:grid;gap:12px">${mails}</div>`;
+}
+
+function extBar(kind,sel,options){
+  return `<div class="ext-bar"><span>${kind} · opened from an email link, no login</span><span class="row">
+    <label for="ext-sel" class="small">Show as</label><select id="ext-sel" onchange="${kind.startsWith('Candidate')?'S.upload':'S.ref'}=this.value;render()">${options.map(c=>`<option value="${c.id}" ${c.id===sel?'selected':''}>${esc(c.name)}</option>`).join('')}</select>
+    <a class="btn small" href="#outbox">Back to the app</a></span></div>`;
+}
+function scrUpload(){
+  const opts=C.filter(c=>c.proofs&&['proof-requested','interview-ready'].includes(c.status));
+  if(!opts.find(c=>c.id===S.upload)&&opts[0])S.upload=opts[0].id;
+  const c=cand(S.upload);
+  if(!c||!c.proofs) return `<div class="outside">${extBar('Candidate page',null,[])}<div class="empty">This link has expired, or no proof is needed right now.</div></div>`;
+  const r=roleOf(c);
+  const demo=`<label class="radio" for="exp-demo" style="margin-top:8px"><input type="checkbox" id="exp-demo" ${c.linkExpired?'checked':''} onchange="A.expireLink('${c.id}',this.checked)"><span class="small muted">Demo: show this link as expired</span></label>`;
+  /* Wave 1, W3: an expired link explains itself, keeps the uploads, names the recruiter and offers a new link */
+  if(c.linkExpired) return `<div class="outside">${extBar('Candidate page',c.id,opts)}
+    <div class="ext-head"><span class="co">${COMPANY}</span><h1>This link has expired</h1><p class="sub">${esc(r.title)} · the link ended on 17 Nov 2026</p></div>
+    <div class="note"><b>Nothing you uploaded is lost.</b> Your application is still open, and the recruiter can send you a new link.</div>
+    <section class="panel"><dl class="kv"><dt>Your recruiter</dt><dd><b>${esc(RECRUITER)}</b>, ${COMPANY}<br><span class="mono small">${esc(S.settings.senderEmail)}</span></dd></dl>
+      ${c.linkRequested?`<div class="note" role="status">Request sent. ${esc(RECRUITER)} will confirm and email you a new link. You can close this page.</div>`:`<div><button class="btn primary" onclick="A.requestLink('${c.id}')">Request a new link</button></div>`}</section>
+    <p class="muted small">This page only shows your application. Your files are only seen by the recruiting team and deleted ${S.settings.retention} days after the role closes.</p>${demo}</div>`;
+  const CST={requested:['Needed',''],pending:['Received, being reviewed','info'],verified:['Verified','ok'],failed:['Could not verify','bad'],'no-response':['Overdue','bad'],unavailable:['We are checking','warn']};
+  const items=c.proofs.map((p,i)=>{
+    let act='';
+    if(p.type==='degree'||p.type==='certificate'){
+      if(['requested','pending','no-response'].includes(p.state)) act=`<div class="row"><label class="btn ${p.state==='pending'?'':'primary'}" for="up-${i}">${p.state==='pending'?'Replace file':'Upload file'}<input type="file" id="up-${i}" accept=".pdf,.jpg,.jpeg,.png" hidden onchange="A.upload('${c.id}',${i},this)"></label><span class="muted small">PDF, JPG or PNG, up to 10 MB${p.file?` · <span class="mono">${esc(p.file)}</span>`:''}</span></div>`;
+    } else if(p.type==='reference'){
+      if(!p.referee) act=`<div class="form-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+        <label class="f" for="rn-${i}">Referee name<input type="text" id="rn-${i}" placeholder="e.g. Jordi Serra"></label>
+        <label class="f" for="re-${i}">Referee work email<input type="email" id="re-${i}" placeholder="name@company.com"></label>
+        <label class="f" for="rj-${i}" style="grid-column:1/-1">Job they can confirm<select id="rj-${i}">${c.claims.jobs.map(j=>`<option>${esc(j)}</option>`).join('')}</select></label></div>
+        <label class="radio" for="rc-${i}"><input type="checkbox" id="rc-${i}"><span class="small">I agree that ${COMPANY} may email this person to confirm my job title and dates only.</span></label>
+        <div class="err" id="rerr-${i}" hidden></div><div><button class="btn primary" onclick="A.refGive('${c.id}',${i})">Send to referee</button></div>`;
+      else act=`<p class="small">We've asked <b>${esc(p.referee.name)}</b> at ${esc(p.referee.employer)} to confirm your title and dates.${p.answer?' They have answered.':''}</p>`;
+    }
+    return `<section class="panel"><div class="panel-h"><h2>${PT[p.type].label}</h2>${chip(CST[p.state][1],CST[p.state][0])}</div><p class="muted">${esc(whyRequested(c,p))}</p>${act}</section>`;
+  }).join('');
+  return `<div class="outside">${extBar('Candidate page',c.id,opts)}
+    <div class="ext-head"><span class="co">${COMPANY}</span><h1>Proof for your application</h1><p class="sub">${esc(r.title)} · link expires 17 Nov 2026</p></div>
+    <p>Hi ${esc(first(c.name))}, you've been shortlisted for interview. Before we book it, please send proof of the claims below from your CV. We only ask for what this role needs.</p>
+    ${items}
+    <div class="note">AI helped read your CV and flag which claims to check. A person at ${COMPANY} reviews every document and makes every decision.</div>
+    <p class="muted small">Your files are only seen by the recruiting team. They are deleted ${S.settings.retention} days after the role closes.</p>${demo}</div>`;
+}
+function scrReferee(){
+  const opts=C.filter(c=>c.proofs?.some(p=>p.type==='reference'&&p.referee&&c.status==='proof-requested'));
+  if(!opts.find(c=>c.id===S.ref)&&opts[0])S.ref=opts[0].id;
+  const c=cand(S.ref); const p=c?.proofs?.find(x=>x.type==='reference');
+  if(!c||!p||!p.referee) return `<div class="outside">${extBar('Referee page',null,[])}<div class="empty">This link has expired.</div></div>`;
+  const done=!!p.answer;
+  return `<div class="outside">${extBar('Referee page',c.id,opts)}
+    <div class="ext-head"><span class="co">${COMPANY}</span><h1>Confirm employment details</h1><p class="sub">For ${esc(c.name)} · takes under a minute <span class="tag stretch">Stretch</span></p></div>
+    <p>Hello ${esc(p.referee.name)}. ${esc(c.name)} applied for a role at ${COMPANY} and gave your name as a referee, with their consent. Please confirm the details below. We only ask about job title and dates, not your opinion of the candidate.</p>
+    <section class="panel"><dl class="kv"><dt>Job title</dt><dd><b>${esc(p.referee.job)}</b></dd><dt>Employer</dt><dd><b>${esc(p.referee.employer)}</b></dd><dt>Dates</dt><dd><b>${esc(p.referee.dates)}</b></dd></dl></section>
+    ${done?`<div class="note">Thank you. Your answer has been sent to the recruiter. You can close this page.</div>`:`
+    <section class="panel"><h2>Are these details correct?</h2>
+      <div class="items">
+        <label class="radio" for="ra-yes"><input type="radio" name="ra" id="ra-yes" value="yes"><span>Yes, these details are correct</span></label>
+        <label class="radio" for="ra-cor"><input type="radio" name="ra" id="ra-cor" value="correction"><span>Partly. I'll give a correction</span></label>
+        <label class="radio" for="ra-no"><input type="radio" name="ra" id="ra-no" value="no"><span>No, these details are not correct</span></label></div>
+      <label class="f" for="ra-text">Correct title or dates <span class="muted" style="font-weight:400">(only if not "Yes")</span><input type="text" id="ra-text" placeholder="e.g. Junior Data Engineer, Mar 2019 to Feb 2024"></label>
+      <div class="err" id="ra-err" hidden></div>
+      <div><button class="btn primary" onclick="A.refAnswer()">Send answer</button></div></section>`}
+    <p class="muted small">Your answer is only seen by the recruiting team at ${COMPANY} and deleted ${S.settings.retention} days after the role closes.</p></div>`;
+}
+
+/* ---------- Shell and routing ---------- */
+const SCREENS = {dashboard:scrDashboard, roles:scrRoles, 'new-role':scrNewRole, 'add-applicants':scrAdd, pipeline:scrPipeline, candidate:scrCandidate,
+  verification:scrVerification, feedback:scrFeedback, audit:scrAudit, 'company-settings':scrSettings, 'new-account':scrNewAccount, outbox:scrOutbox, upload:scrUpload, referee:scrReferee, login:scrLogin, invite:scrInvite};
+const PARENT = {'new-role':'roles','add-applicants':'roles',candidate:'pipeline','new-account':'company-settings'};
+const PUBLIC = ['upload','referee','login','invite'];
+let lastRoute=null;
+function render(){
+  const route=(location.hash.slice(1)||'dashboard');
+  let r=SCREENS[route]?route:'dashboard';
+  if(!S.user&&!PUBLIC.includes(r)){S.after=r;r='login'}
+  if(S.user&&r==='login'){r='dashboard'}
+  const html=SCREENS[r]();
+  if(PUBLIC.includes(r)){ $('#app').innerHTML=html; }
+  else {
+    const active=PARENT[r]||r;
+    const pend=C.flatMap(c=>c.proofs||[]).filter(p=>p.state==='pending').length;
+    const drafts=C.filter(c=>c.status==='unsuccessful').length;
+    const nav=[['dashboard','Dashboard'],['roles','Roles'],['pipeline','Candidates'],['verification','Verification',pend],['feedback','Feedback',drafts],['audit','Audit log'],['company-settings','Settings']];
+    const out=[['outbox','Demo outbox',OUTBOX.length],['upload','Candidate upload page'],['referee','Referee form']];
+    const link=([h,t,n])=>`<a href="#${h}" class="${active===h?'on':''}" ${active===h?'aria-current="page"':''}><span>${t}</span>${n?`<span class="badge">${n}</span>`:''}</a>`;
+    $('#app').innerHTML=`<div class="shell"><aside class="side"><div class="brand">Pre-Interview Pipeline</div><div class="brand-sub">${COMPANY}</div>
+      <nav class="nav" aria-label="Main">${nav.map(link).join('')}<div class="sep">Outside the app</div>${out.map(link).join('')}</nav>
+      <div class="viewer"><span>Signed in as <b>${esc(S.user.name)}</b><br>${UTYPE[S.user.type]}${S.viewer==='hrlead'?' · read-only on candidates':''}</span><button class="btn small" onclick="A.logout()">Sign out</button></div>
+      </aside><main id="main">${html}</main></div>`;
+  }
+  if(route!==lastRoute){window.scrollTo(0,0);lastRoute=route}
+}
+window.addEventListener('hashchange',render);
+render();
+</script>
